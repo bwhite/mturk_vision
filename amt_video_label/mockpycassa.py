@@ -19,3 +19,7 @@ class MockColumnFamily(object):
 
     def add(self, key, column, value=1):
         self.db[key][column] += 1
+
+
+    def get_range():
+        return self.db.items()

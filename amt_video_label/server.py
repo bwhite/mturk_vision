@@ -46,16 +46,14 @@ def increment_column(db, user_id, column):
 
 @bottle.get('/:secret/results.js')
 def admin_results(secret):
-    pass
-    #if secret == SECRET:
-    #    return RESPONSE_DB.json()
+    if secret == SECRET:
+        return json.dumps(dict(RESPONSE_DB.get_range()))
 
 
 @bottle.get('/:secret/users.js')
 def admin_users(secret):
-    pass
-    #if secret == SECRET:
-    #    return json.dumps(USERS_DB)
+    if secret == SECRET:
+        return json.dumps(dict(USERS_DB.get_range()))
 
 
 @bottle.get('/user.js')
@@ -100,7 +98,6 @@ def make_data(user_id):
     for frame in FRAME_DB[event][video]:
         out['images'].append({"src": 'frames/%s.jpg' % PATH_TO_KEY[frame], "width": 250})
     increment_column(USERS_DB, user_id, 'tasks_viewed')
-    cur_user['tasks_viewed'] += 1
     return out
 
 
