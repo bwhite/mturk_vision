@@ -11,10 +11,10 @@ qualifications = boto.mturk.qualification.Qualifications()
 qualifications.add(boto.mturk.qualification.PercentAssignmentsApprovedRequirement('GreaterThan', 80, True))
 qualifications.add(boto.mturk.qualification.NumberHitsApprovedRequirement('GreaterThan', 100, True))
 out = mtc.create_hit(question=question,
-                     max_assignments=10,
+                     max_assignments=20,
                      qualifications=qualifications,
                      title='Video Topic Annotation',
                      description='Categorize 100 videos by topic (shown as a selection of frames).  Each takes about 20 seconds.  Bonus for high accuracy.',
                      keywords='video annotation quick fun game'.split(),
-                     duration = 60 * 60,
+                     duration = int(60 * 60 * 1.5),
                      reward=0.25)
