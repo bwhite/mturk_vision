@@ -72,7 +72,9 @@ class AMTManager(object):
             return json.dumps(dict(self.users_db))
 
     def _user_finished(self, user_id):
-        """Check if the user has finished their tasks, if so output the return dictionary
+        """Check if the user has finished their tasks, if so output the return dictionary.
+
+        Updates tasks_viewed if we aren't finished.
 
         Args:
             user_id: User ID string
@@ -97,6 +99,7 @@ class AMTManager(object):
                                                            ('tasks_correct', cur_user['tasks_correct']),
                                                            ('time_taken', cur_user['end_time'] - cur_user['start_time'])]])
             return {'submit_url': '%s/mturk/externalSubmit?%s' % (cur_user.get('turkSubmitTo', 'http://www.mturk.com'), query_string)}
+        self.users_db[user_id]['tasks_viewed'] = cur_user['tasks_viewed'] + 1
         raise NotFinished
 
     def result(self, user_id, correct):
@@ -148,25 +151,89 @@ class AMTVideoClassificationManager(AMTManager):
             self.key_to_path_db[key] = frame
 
     def make_data(self, user_id):
-        event = random.choice(list(self.frame_db))
-        video = random.choice(list(self.frame_db[event]))
         try:
             return self._user_finished(user_id)
         except NotFinished:
             pass
+        event = random.choice(list(self.frame_db))
+        video = random.choice(list(self.frame_db[event]))
         out = {"images": [],
                "data_id": self.urlsafe_uuid()}
         self.response_db[out['data_id']] = {'event': event, 'video': video,
                                             'user_id': user_id, 'start_time': time.time()}
         for frame in self.frame_db[event][video]:
             out['images'].append({"src": 'frames/%s.jpg' % self.path_to_key_db[frame], "width": 250})
-        self.users_db[user_id]['tasks_viewed'] = self.users_db[user_id]['tasks_viewed'] + 1
         return out
 
     def admin_results(self, secret):
         """Return contents of response_db"""
         if secret == self.secret:
             return json.dumps(dict(self.response_db))
+
+    def result(self, user_id, data_id, event):
+        #assert request['user_id'] in USERS_DB
+        response = self.response_db[data_id]
+        assert response['user_id'] == user_id
+        # Don't double count old submissions
+        if 'user_event' not in response:
+            response['user_event'] = event
+            if event == response['event']:
+                super(AMTVideoClassificationManager, self).result(user_id, True)
+            else:
+                super(AMTVideoClassificationManager, self).result(user_id, False)
+        self.response_db[data_id] = response
+        return self.make_data(user_id)
+
+
+class AMTVideoTextMatchManager(AMTVideoClassificationManager):
+
+    def __init__(self, description_db_uri, extra_same_class=4, extra_other_class=5, *args, **kw):
+        super(AMTVideoTextMatchManager, self).__init__(*args, **kw)
+        self.description_db = Shove(description_db_uri)  # [video] = {event, description}
+
+    def _random_videos(self, events, previous=()):
+        """Provides an iterator of videos corresponding to the provided events without duplicates
+
+        Args:
+            events:  Iterator of events
+
+        Yields:
+            (event, video_id)
+        """
+        previous = set(previous)
+        for event in events:
+            while 1:
+                out = random.choice(list(self.frame_db[event]))
+                if out not in previous:
+                    break
+            previous.add(out)
+            yield event, out
+
+    def make_data(self, user_id):
+        try:
+            return self._user_finished(user_id)
+        except NotFinished:
+            pass
+        # Select a description
+        positive_video = random.choice(list(self.description_db))
+        positive_event = self.description_db[positive_video]['event']
+        event_videos = [(positive_event, positive_video)]
+        # Select other videos from the same class
+        event_videos += list(self._random_videos([positive_event] * self.extra_same_class))
+        other_classes = set(self.frame_db) - set(positive_event)
+        event_videos += list(self._random_videos(random.choice(other_classes) for x in range(self.extra_other_class)))
+        random.shuffle(event_videos)
+        out = {'images': [],
+               'data_id': self.urlsafe_uuid()}
+        self.response_db[out['data_id']] = {'event_videos': event_videos, 'positive_video': positive_video,
+                                            'positive_event': positive_event,
+                                            'user_id': user_id, 'start_time': time.time()}
+        for event, video in event_videos:
+            cur_out = []
+            for frame in self.frame_db[event][video]:
+                cur_out.append({"src": 'frames/%s.jpg' % self.path_to_key_db[frame], "width": 250})
+            out.append(cur_out)
+        return out
 
     def result(self, user_id, data_id, event):
         #assert request['user_id'] in USERS_DB

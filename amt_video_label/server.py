@@ -13,6 +13,11 @@ def index():
     return MANAGER.index
 
 
+@bottle.get('/style.css')
+def styles():
+    return bottle.static_file('style.css', './')
+
+
 @bottle.get('/user.js')
 def user():
     return MANAGER.user(bottle.request)
@@ -66,8 +71,10 @@ def main():
                         default='8080')
     parser.add_argument('--num_tasks', help='Number of tasks per worker (unused in standalone mode)',
                         default=100, type=int)
-    parser.add_argument('--mode', type=str, help='Number of tasks per worker',
+    parser.add_argument('--mode', help='Number of tasks per worker',
                         default='standalone', choices=['amt', 'standalone'])
+    parser.add_argument('--type', help='Which AMT job type to run (label, match)',
+                        default='label', choices=['label', 'match'])
     args = vars(parser.parse_args())
     path_root = os.path.expanduser('~/amt_video_classification/')
     try:
@@ -77,10 +84,16 @@ def main():
         existing = True
     uri_root = 'sqlite:///' + path_root
     args.update(dict((x + '_db_uri', uri_root + x + '.db')
-                     for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'response']))
-    MANAGER = base.AMTVideoClassificationManager(index_path='index.html',
-                                                 config_path='config.js',
-                                                 **args)
+                     for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'response', 'description']))
+    if args['type'] == 'label':
+        MANAGER = base.AMTVideoClassificationManager(index_path='video_label.html',
+                                                     config_path='video_label_config.js',
+                                                     **args)
+    elif args['type'] == 'match':
+        MANAGER = base.AMTVideoClassificationManager(index_path='video_match.html',
+                                                     config_path='video_match_config.js',
+                                                     **args)
+        
     if not existing:
         print('Running initial setup')
         MANAGER.initial_setup()
