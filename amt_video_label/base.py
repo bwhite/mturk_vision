@@ -8,7 +8,6 @@ import math
 import glob
 import os
 from shove import Shove
-import cPickle as pickle
 
 
 class NotFinished(Exception):
@@ -21,12 +20,22 @@ class AMTManager(object):
                  key_to_path_db_uri, path_to_key_db_uri, **kw):
         self.mode = mode
         self.num_tasks = num_tasks
-        self.index = open(index_path).read()
-        self.config = json.load(open(config_path))
         self.users_db = Shove(user_db_uri)
         self.key_to_path_db = Shove(key_to_path_db_uri)
         self.path_to_key_db = Shove(path_to_key_db_uri)
+        self.index_path = index_path
+        self.config_path = config_path
         self._make_secret()
+
+    @property
+    def index(self):
+        # Reload each time to simplify development
+        return open(self.index_path).read()
+
+    @property
+    def config(self):
+        # Reload each time to simplify development
+        return open(self.config_path).read()
 
     def _make_secret(self):
         """Make secret used for admin functions"""
@@ -136,7 +145,7 @@ class AMTVideoClassificationManager(AMTManager):
                     continue
                 video = os.path.basename(video_path)
                 frame_db[event][video] = []
-                frame_paths = self._prune_frame_paths(sorted(glob.glob(video_path + '/*')))
+                frame_paths = self._prune_frame_paths(sorted(glob.glob(video_path + '/*.jpg')))
                 for frame_path in frame_paths:
                     frame_db[event][video].append(frame_path)
         self.frame_db.update(frame_db)
@@ -190,6 +199,23 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
     def __init__(self, description_db_uri, extra_same_class=4, extra_other_class=5, *args, **kw):
         super(AMTVideoTextMatchManager, self).__init__(*args, **kw)
         self.description_db = Shove(description_db_uri)  # [video] = {event, description}
+        self.extra_same_class = extra_same_class
+        self.extra_other_class = extra_other_class
+        self.setup()
+
+    def setup(self, data_root='./data/'):
+        self.description_db.clear()
+        for event_path in glob.glob('%s/*' % data_root):
+            if not os.path.isdir(event_path):
+                continue
+            event = os.path.basename(event_path)
+            for video_path in glob.glob(event_path + '/*'):
+                if not os.path.isdir(video_path):
+                    continue
+                if os.path.exists(video_path + '/desc0.txt'):
+                    video = os.path.basename(video_path)
+                    self.description_db[video] = {'event': event, 'description': open(video_path + '/desc0.txt').read()}
+        print(self.description_db)
 
     def _random_videos(self, events, previous=()):
         """Provides an iterator of videos corresponding to the provided events without duplicates
@@ -220,11 +246,12 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         event_videos = [(positive_event, positive_video)]
         # Select other videos from the same class
         event_videos += list(self._random_videos([positive_event] * self.extra_same_class))
-        other_classes = set(self.frame_db) - set(positive_event)
+        other_classes = list(set(self.frame_db) - set(positive_event))
         event_videos += list(self._random_videos(random.choice(other_classes) for x in range(self.extra_other_class)))
         random.shuffle(event_videos)
         out = {'images': [],
-               'data_id': self.urlsafe_uuid()}
+               'data_id': self.urlsafe_uuid(),
+               'description': self.description_db[positive_video]['description']}
         self.response_db[out['data_id']] = {'event_videos': event_videos, 'positive_video': positive_video,
                                             'positive_event': positive_event,
                                             'user_id': user_id, 'start_time': time.time()}
@@ -232,19 +259,37 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
             cur_out = []
             for frame in self.frame_db[event][video]:
                 cur_out.append({"src": 'frames/%s.jpg' % self.path_to_key_db[frame], "width": 250})
-            out.append(cur_out)
+            out['images'].append(cur_out)
         return out
 
-    def result(self, user_id, data_id, event):
+    def result(self, user_id, data_id, video_index):
+        #{u'video_index': 6, u'user_id': u'zXIJYA5LSFOxcuuSoKRJWQ', u'data_id': u'C6CGNbZJRlKsFnVWI078_Q'}
         #assert request['user_id'] in USERS_DB
         response = self.response_db[data_id]
         assert response['user_id'] == user_id
+        assert 0 <= video_index < len(response['event_videos'])
         # Don't double count old submissions
-        if 'user_event' not in response:
-            response['user_event'] = event
-            if event == response['event']:
-                super(AMTVideoClassificationManager, self).result(user_id, True)
+        if 'video_index' not in response:
+            response['video_index'] = video_index
+            if response['event_videos'][video_index][1] == response['positive_video']:
+                super(AMTVideoTextMatchManager, self).result(user_id, True)
             else:
-                super(AMTVideoClassificationManager, self).result(user_id, False)
+                super(AMTVideoTextMatchManager, self).result(user_id, False)
+        self.response_db[data_id] = response
+        return self.make_data(user_id)
+
+
+class AMTVideoDescriptionManager(AMTVideoClassificationManager):
+
+    def __init__(self, description_db_uri, *args, **kw):
+        super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
+
+    def result(self, user_id, data_id, description):
+        response = self.response_db[data_id]
+        assert response['user_id'] == user_id
+        # Don't double count old submissions
+        if 'description' not in response:
+            response['description'] = description
+            super(AMTVideoClassificationManager, self).result(user_id, False)
         self.response_db[data_id] = response
         return self.make_data(user_id)

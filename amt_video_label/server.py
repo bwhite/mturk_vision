@@ -73,10 +73,17 @@ def main():
                         default=100, type=int)
     parser.add_argument('--mode', help='Number of tasks per worker',
                         default='standalone', choices=['amt', 'standalone'])
-    parser.add_argument('--type', help='Which AMT job type to run (label, match)',
-                        default='label', choices=['label', 'match'])
+    parser.add_argument('--type', help='Which AMT job type to run',
+                        default='label', choices=['label', 'match', 'description'])
     args = vars(parser.parse_args())
-    path_root = os.path.expanduser('~/amt_video_classification/')
+    if args['type'] == 'label':
+        path_root = os.path.expanduser('~/amt_video_classification/')
+    elif args['type'] == 'match':
+        path_root = os.path.expanduser('~/amt_video_match/')
+    elif args['type'] == 'description':
+        path_root = os.path.expanduser('~/amt_video_description/')
+    else:
+        raise ValueError('Unknown type[%s]' % args['type'])
     try:
         os.makedirs(path_root)
         existing = False
@@ -90,10 +97,15 @@ def main():
                                                      config_path='video_label_config.js',
                                                      **args)
     elif args['type'] == 'match':
-        MANAGER = base.AMTVideoClassificationManager(index_path='video_match.html',
+        MANAGER = base.AMTVideoTextMatchManager(index_path='video_match.html',
                                                      config_path='video_match_config.js',
                                                      **args)
-        
+    elif args['type'] == 'description':
+        MANAGER = base.AMTVideoDescriptionManager(index_path='video_description.html',
+                                                  config_path='video_description_config.js',
+                                                  **args)
+    else:
+        raise ValueError('Unknown type[%s]' % args['type'])
     if not existing:
         print('Running initial setup')
         MANAGER.initial_setup()
