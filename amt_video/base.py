@@ -86,7 +86,7 @@ class AMTManager(object):
         if secret == self.secret:
             return json.dumps(dict(self.users_db))
 
-    def _user_finished(self, user_id):
+    def _user_finished(self, user_id, force=False):
         """Check if the user has finished their tasks, if so output the return dictionary.
 
         Updates tasks_viewed if we aren't finished.
@@ -101,7 +101,7 @@ class AMTManager(object):
             NotFinished: User hasn't finished their tasks
         """
         cur_user = self.users_db[user_id]
-        if self.mode != 'standalone' and cur_user['tasks_finished'] >= self.num_tasks:
+        if (self.mode != 'standalone' and cur_user['tasks_finished'] >= self.num_tasks) or force:
             cur_user['end_time'] = time.time()
             self.users_db[user_id] = cur_user
             pct_correct = cur_user['tasks_correct'] / float(cur_user['tasks_finished'])
