@@ -234,10 +234,21 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         except NotFinished:
             pass
         # Select a description
-        positive_video = random.choice(list(self.description_db))
+        user = self.users_db[user_id]
+        previous_video_descriptions = user.get('previous_video_descriptions', set())
+        try:
+            available_videos = list(set(self.description_db) - previous_video_descriptions)
+            print('Videos Left[%d]' % len(available_videos))
+            positive_video = random.choice(available_videos)
+        except IndexError:  # There are no more left
+            return self._user_finished(user_id, force=True)
+        # Write the updated prev descriptions to the user db
+        previous_video_descriptions.add(positive_video)
+        user['previous_video_descriptions'] = previous_video_descriptions
+        self.users_db[user_id] = user
+        # Select other videos from the same class
         positive_event = self.description_db[positive_video]['event']
         event_videos = [(positive_event, positive_video)]
-        # Select other videos from the same class
         event_videos += list(self._random_videos([positive_event] * self.extra_same_class))
         other_classes = list(set(self.frame_db) - set(positive_event))
         event_videos += list(self._random_videos(random.choice(other_classes) for x in range(self.extra_other_class)))
