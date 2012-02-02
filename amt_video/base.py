@@ -278,6 +278,8 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
             response['description'] = description
             super(AMTVideoClassificationManager, self).result(user_id, False)
         self.response_db[data_id] = response
+        print('Checking [%s]' % response['video'])
+        print(self.description_db.keys())
         if response['video'] not in self.description_db:
             print('Adding [%s]' % response['video'])
             self.description_db[response['video']] = {'event': response['event'],
