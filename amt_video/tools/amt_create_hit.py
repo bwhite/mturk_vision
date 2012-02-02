@@ -13,8 +13,8 @@ qualifications.add(boto.mturk.qualification.NumberHitsApprovedRequirement('Great
 out = mtc.create_hit(question=question,
                      max_assignments=20,
                      qualifications=qualifications,
-                     title='Video Topic Annotation',
-                     description='Categorize 100 videos by topic (shown as a selection of frames).  Each takes about 20 seconds.  Bonus for high accuracy.',
+                     title='Match Video to Text Description',
+                     description='Select which video (shown as image keyframes) corresponds to a text description.',
                      keywords='video annotation quick fun game'.split(),
-                     duration = int(60 * 60 * 1.5),
-                     reward=0.25)
+                     duration=int(60 * 30),
+                     reward=0.10)
