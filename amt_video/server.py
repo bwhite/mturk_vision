@@ -4,7 +4,6 @@ import bottle
 import argparse
 import base
 import os
-import signal
 
 
 MANAGER = None
@@ -65,11 +64,10 @@ def make_data(user_id):
     return MANAGER.make_data(user_id)
 
 
-def sync_dbs(signum, frame):
-    print('Syncing DB')
-    MANAGER.sync()
-    if signum == signal.SIGINT:
-        quit()
+def sync_dbs():
+    while 1:
+        MANAGER.sync()
+        gevent.sleep(5)
 
 
 def main():
@@ -113,8 +111,7 @@ def main():
         raise ValueError('Unknown type[%s]' % args['type'])
     if not existing:
         MANAGER.initial_setup()
-    signal.signal(signal.SIGINT, sync_dbs)
-    signal.alarm(60)
+    gevent.spawn(sync_dbs)
     bottle.run(host='0.0.0.0', port=args['port'], server='gevent')
 
 if __name__ == "__main__":
