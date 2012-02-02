@@ -284,4 +284,5 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
             print('Adding [%s]' % response['video'])
             self.description_db[response['video']] = {'event': response['event'],
                                                       'description': response['description']}
+            self.description_db.sync()
         return self.make_data(user_id)
