@@ -107,9 +107,7 @@ def main():
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if not existing:
-        print('Running initial setup')
         MANAGER.initial_setup()
-        print('Done running initial setup')
     bottle.run(host='0.0.0.0', port=args['port'], server='gevent')
 
 if __name__ == "__main__":
