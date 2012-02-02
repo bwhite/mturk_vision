@@ -23,9 +23,14 @@ class AMTManager(object):
         self.users_db = Shove(user_db_uri)
         self.key_to_path_db = Shove(key_to_path_db_uri)
         self.path_to_key_db = Shove(path_to_key_db_uri)
+        self.dbs = [self.key_to_path_db, self.path_to_key_db, self.users_db]
         self.index_path = index_path
         self.config_path = config_path
         self._make_secret()
+
+    def sync(self):
+        for db in self.dbs:
+            db.sync()
 
     @property
     def index(self):
@@ -125,6 +130,7 @@ class AMTVideoClassificationManager(AMTManager):
         super(AMTVideoClassificationManager, self).__init__(*args, **kw)
         self.frame_db = Shove(frame_db_uri)  # [event][video] = frames
         self.response_db = Shove(response_db_uri)
+        self.dbs += [self.frame_db, self.response_db]
 
     def _prune_frame_paths(self, frame_paths, target_frames=10):
         target_frames = float(target_frames)
@@ -201,6 +207,7 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         self.description_db = Shove(description_db_uri)  # [video] = {event, description}
         self.extra_same_class = extra_same_class
         self.extra_other_class = extra_other_class
+        self.dbs += [self.description_db]
 
     def _random_videos(self, events, previous=()):
         """Provides an iterator of videos corresponding to the provided events without duplicates
@@ -269,6 +276,7 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
     def __init__(self, description_db_uri, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
         self.description_db = Shove(description_db_uri)  # [video] = {event, description}
+        self.dbs += [self.description_db]
 
     def result(self, user_id, data_id, description):
         response = self.response_db[data_id]
