@@ -55,6 +55,14 @@ def admin_users(secret):
     return MANAGER.admin_users(secret)
 
 
+@bottle.get('/:secret/quit')
+def admin_users(secret):
+    print('Quitting')
+    MANAGER.sync()
+    quit()
+
+
+
 @bottle.put('/result/')
 def result():
     return MANAGER.result(**bottle.request.json)

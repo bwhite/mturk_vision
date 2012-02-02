@@ -48,6 +48,7 @@ class AMTManager(object):
         open('SECRET', 'w').write(self.secret)
         print('Results URL:  /%s/results.js' % self.secret)
         print('Users URL:  /%s/users.js' % self.secret)
+        print('Quit URL:  /%s/quit' % self.secret)
 
     def make_data(self, user_id):
         pass
