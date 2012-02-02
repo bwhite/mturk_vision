@@ -265,9 +265,9 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         if 'video_index' not in response:
             response['video_index'] = video_index
             if response['event_videos'][video_index][1] == response['positive_video']:
-                super(AMTVideoTextMatchManager, self).result(user_id, True)
+                super(AMTVideoClassificationManager, self).result(user_id, True)
             else:
-                super(AMTVideoTextMatchManager, self).result(user_id, False)
+                super(AMTVideoClassificationManager, self).result(user_id, False)
         self.response_db[data_id] = response
         return self.make_data(user_id)
 
