@@ -76,14 +76,7 @@ def main():
     parser.add_argument('--type', help='Which AMT job type to run',
                         default='label', choices=['label', 'match', 'description'])
     args = vars(parser.parse_args())
-    if args['type'] == 'label':
-        path_root = os.path.expanduser('~/amt_video_classification/')
-    elif args['type'] == 'match':
-        path_root = os.path.expanduser('~/amt_video_match/')
-    elif args['type'] == 'description':
-        path_root = os.path.expanduser('~/amt_video_description/')
-    else:
-        raise ValueError('Unknown type[%s]' % args['type'])
+    path_root = os.path.expanduser('~/amt_video/')
     try:
         os.makedirs(path_root)
         existing = False
@@ -91,16 +84,19 @@ def main():
         existing = True
     uri_root = 'sqlite:///' + path_root
     args.update(dict((x + '_db_uri', uri_root + x + '.db')
-                     for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'response', 'description']))
+                     for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'description']))
     if args['type'] == 'label':
+        args['response_db_uri'] = uri_root + 'label_response.db'
         MANAGER = base.AMTVideoClassificationManager(index_path='video_label.html',
                                                      config_path='video_label_config.js',
                                                      **args)
     elif args['type'] == 'match':
+        args['response_db_uri'] = uri_root + 'match_response.db'
         MANAGER = base.AMTVideoTextMatchManager(index_path='video_match.html',
                                                      config_path='video_match_config.js',
                                                      **args)
     elif args['type'] == 'description':
+        args['response_db_uri'] = uri_root + 'description_response.db'
         MANAGER = base.AMTVideoDescriptionManager(index_path='video_description.html',
                                                   config_path='video_description_config.js',
                                                   **args)
