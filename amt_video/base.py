@@ -266,8 +266,9 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
 
 class AMTVideoDescriptionManager(AMTVideoClassificationManager):
 
-    def __init__(self, *args, **kw):
+    def __init__(self, description_db_uri, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
+        self.description_db = Shove(description_db_uri)  # [video] = {event, description}
 
     def result(self, user_id, data_id, description):
         response = self.response_db[data_id]
