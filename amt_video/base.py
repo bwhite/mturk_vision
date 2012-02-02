@@ -201,7 +201,6 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         self.description_db = Shove(description_db_uri)  # [video] = {event, description}
         self.extra_same_class = extra_same_class
         self.extra_other_class = extra_other_class
-        self.setup()
 
     def _random_videos(self, events, previous=()):
         """Provides an iterator of videos corresponding to the provided events without duplicates
@@ -267,9 +266,8 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
 
 class AMTVideoDescriptionManager(AMTVideoClassificationManager):
 
-    def __init__(self, description_db_uri, *args, **kw):
+    def __init__(self, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
-        self.description_db = Shove(description_db_uri)  # [video] = {event, description}
 
     def result(self, user_id, data_id, description):
         response = self.response_db[data_id]
@@ -280,6 +278,7 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
             super(AMTVideoClassificationManager, self).result(user_id, False)
         self.response_db[data_id] = response
         if response['video'] not in self.description_db:
+            print('Adding [%s]' % response['video'])
             self.description_db[response['video']] = {'event': response['event'],
                                                       'description': response['description']}
         return self.make_data(user_id)
