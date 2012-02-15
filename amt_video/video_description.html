@@ -24,6 +24,34 @@
 
   <body>
     <script type="text/javascript">
+    <!-- Function draw_table provided by Joe Ng <yueng@cs.umd.edu> -->
+      function draw_table(details, styles, div_id){
+          $('#' + div_id).html('');
+          var div_id = '#' + div_id;
+          var image_link = "static/example.jpg";
+          var table = $('<table>', {class:"zebra-striped", width:750}).append($('<tr>')
+                                                                              .append($('<th>', {width:100}).text('Detail Type'))
+                                                                              .append($('<th>', {width:200}).text('Description'))
+                                                                              .append($('<th>', {width:100}).text('Example')));
+          for (var key in details){
+              var row = $('<tr>', {id:key}).append($('<td>').text(details[key]['type']))
+                  .append($('<td>').text(details[key]['description']))
+                  .append($('<td>').text(details[key]['example']));
+              table.append(row);
+          }
+          $(div_id).append(table);
+          var table = $('<table>', {class:"zebra-striped", width:750}).append($('<tr>')
+                                                                              .append($('<th>', {width:100}).text('Style Type'))
+                                                                              .append($('<th>', {width:200}).text('Description'))
+                                                                              .append($('<th>', {width:100}).text('Example')));
+          for (var key in styles){
+              var row = $('<tr>', {id:key}).append($('<td>').text(styles[key]['type']))
+                  .append($('<td>').text(styles[key]['description']))
+                  .append($('<td>').text(styles[key]['example']));
+              table.append(row);
+          }
+          $(div_id).append(table);
+      }
 
       function query_string() {
           var results = new RegExp('\\?.*').exec(window.location.href);
@@ -51,6 +79,8 @@
         if (data.submit_url) { <!-- If we are given a submit url, redirect to it and we are done. -->
             window.location.href = data.submit_url;
         }
+        cur_data = data;
+        draw_table(data.description_type.details, data.description_type.styles, "constraint");
         data_id = data.data_id;
         $('#images').html('');
         $.each(data.images, function(index, value) {   
@@ -126,6 +156,7 @@
            <h2>Instructions</h2>
             <div id="instructions">
             </div>
+            <div id="constraint"></div>
             <h2 id="image_name"></h2>
             <div id="images" style="padding-bottom: 40px"></div>
             <h2 id="description_name"></h2>

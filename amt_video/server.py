@@ -14,6 +14,11 @@ def index():
     return MANAGER.index
 
 
+@bottle.get('/static/<file_name:re:[a-zA-z_\-\.0-9]+\.(js|png|jpeg|jpg|html|css)>')
+def static(file_name):
+    return bottle.static_file(file_name, './static')
+
+
 @bottle.get('/style.css')
 def styles():
     return bottle.static_file('style.css', './')
@@ -111,7 +116,7 @@ def main():
                                                      config_path='video_match_config.js',
                                                      **args)
     elif args['type'] == 'description':
-        args['response_db_uri'] = uri_root + 'description_response.db'
+        args['response_db_uri'] = uri_root + 'typed_description_response.db'
         MANAGER = base.AMTVideoDescriptionManager(index_path='video_description.html',
                                                   config_path='video_description_config.js',
                                                   **args)
