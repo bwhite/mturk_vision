@@ -302,16 +302,12 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
         s['words'] = {'type': 'Words by Priority', 'example': 'word0, word1, word2a word2b, word3', 'description': 'The first word (e.g., word0 in the example) is the most noticeable in the video and the words are of the detail type(s) requested.  Separate words by commas, multiple related words are allowed together (e.g., word2a word2b).  The description should be less than 140 characters.'}
         return {'details': d, 'styles': s}
 
-    def make_data(self, user_id):
+    def make_data(self, user_id, description_type=None):
         out = super(AMTVideoDescriptionManager, self).make_data(user_id)
-        cur_user = self.users_db[user_id]
-        try:
-            description_type = cur_user['description_type']
-        except KeyError:
+        if description_type is None:
             description_type = self._generate_description_type()
-            cur_user['description_type'] = description_type
-            self.users_db[user_id] = cur_user
         out['description_type'] = description_type
+        self.response_db[out['data_id']] = out  # Update response
         return out
 
     def result(self, user_id, data_id, description):
@@ -323,9 +319,9 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
             super(AMTVideoClassificationManager, self).result(user_id, False)
             response['end_time'] = time.time()
             self.response_db[data_id] = response
-        description_type = self.users_db[user_id]['description_type']
+        description_type = response['description_type']
         if response['video'] not in self.description_db:
             self.description_db[response['video']] = [{'event': response['event'],
                                                        'description': response['description'],
                                                        'description_type': description_type}]
-        return self.make_data(user_id)
+        return self.make_data(user_id, description_type)
