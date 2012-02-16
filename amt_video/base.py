@@ -306,6 +306,7 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
         out = super(AMTVideoDescriptionManager, self).make_data(user_id)
         if description_type is None:
             description_type = self._generate_description_type()
+        print(out)
         response = self.response_db[out['data_id']]
         response['description_type'] = out['description_type'] = description_type
         self.response_db[out['data_id']] = response
