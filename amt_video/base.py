@@ -293,13 +293,13 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
         self.dbs += [self.description_db]
 
     def _generate_description_type(self):
-        desc_types = [{'color_adj': {'description': 'Dominant colors', 'example': 'blue, red, green, yellow, purple, orange', 'type': 'Colors (adjectives)'}},
-                      {'thing_noun': {'description': 'Important objects', 'example': 'person, bird, bus, car, knife, ball', 'type': 'Foreground Objects (nouns)'}},
-                      {'stuff_noun': {'description': 'Background details, textures, and materials.  Not foreground objects.', 'example': 'sky, grass, trees, water, road, carpet, brick wall, wood floor, rocks', 'type': 'Background Objects (nouns)'}},
-                      {'scene': {'description': 'Name of the scene', 'example': 'outdoors, indoors, cricket field, skateboard park', 'type': 'Scene Name (nouns)'}}]
-        d = random.choice(desc_types)
+        d = {'color_adj': {'description': 'Dominant colors', 'example': 'blue, red, green, yellow, purple, orange', 'type': 'Colors (adjectives)'},
+                      'thing_noun': {'description': 'Important objects', 'example': 'person, bird, bus, car, knife, ball', 'type': 'Foreground Objects (nouns)'},
+                      'stuff_noun': {'description': 'Background details, textures, and materials.', 'example': 'sky, grass, trees, water, road, carpet, brick wall, wood floor, rocks', 'type': 'Background Objects (nouns)'},
+                      'scene': {'description': 'Name of the scene', 'example': 'outdoors, indoors, cricket field, skateboard park', 'type': 'Scene Name (nouns)'}}
         s = {}
-        s['words'] = {'type': 'Words by Priority', 'example': 'word0, word1, word2a word2b, word3', 'description': 'The first word (e.g., word0 in the example) is the most noticeable in the video and the words are of the detail type(s) requested.  Separate words by commas, multiple related words are allowed together (e.g., word2a word2b).  The description should be less than 140 characters.'}
+        #s['words'] = {'type': 'Words by Priority', 'example': 'word0, word1, word2a word2b, word3', 'description': 'The first word (e.g., word0 in the example) is the most noticeable in the video and the words are of the detail type(s) requested.  Separate words by commas, multiple related words are allowed together (e.g., word2a word2b).  The description should be less than 140 characters.'}
+        s['words'] = {'type': 'Freeform Text', 'example': 'The man does a skateboard trick outdoors on a ramp using a red board under a blue sky near a green tree', 'description': 'The description should be less than 140 characters and you do not need formatting.'}
         return {'details': d, 'styles': s}
 
     def make_data(self, user_id, description_type=None):
