@@ -102,7 +102,7 @@ def main():
         existing = False
     except OSError:
         existing = True
-    uri_root = 'sqlite:///' + path_root
+    uri_root = 'leveldb://' + path_root
     args.update(dict((x + '_db_uri', uri_root + x + '.db')
                      for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'description']))
     if args['type'] == 'label':
