@@ -116,7 +116,7 @@ def main():
                                                      config_path='video_match_config.js',
                                                      **args)
     elif args['type'] == 'description':
-        args['response_db_uri'] = uri_root + 'typed_description_response.db'
+        args['response_db_uri'] = uri_root + 'description_response.db'
         MANAGER = base.AMTVideoDescriptionManager(index_path='video_description.html',
                                                   config_path='video_description_config.js',
                                                   **args)
