@@ -13,8 +13,8 @@ qualifications = boto.mturk.qualification.Qualifications()
 out = mtc.create_hit(question=question,
                      max_assignments=10,
                      qualifications=qualifications,
-                     title='Write a text description for a sequence of video frames.',
-                     description='Write a text description for a sequence of video frames (perform for 5 videos)',
-                     keywords='video annotation quick'.split(),
+                     title='Write a short description for 5 videos',
+                     description='Write a short description for 5 videos',
+                     keywords='video annotation write quick fun'.split(),
                      duration=int(60 * 5),
-                     reward=0.25)
+                     reward=0.5)

@@ -14,7 +14,7 @@
     <!-- Le styles -->
     <link href="http://twitter.github.com/bootstrap/1.3.0/bootstrap.css" rel="stylesheet">
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-    <link href="style.css" rel="stylesheet">
+    <link href="static/style.css" rel="stylesheet">
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="images/favicon.ico">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -24,34 +24,6 @@
 
   <body>
     <script type="text/javascript">
-    <!-- Function draw_table provided by Joe Ng <yueng@cs.umd.edu> -->
-      function draw_table(details, styles, div_id){
-          $('#' + div_id).html('');
-          var div_id = '#' + div_id;
-          var image_link = "static/example.jpg";
-          var table = $('<table>', {class:"zebra-striped", width:750}).append($('<tr>')
-                                                                              .append($('<th>', {width:100}).text('Detail Type'))
-                                                                              .append($('<th>', {width:200}).text('Description'))
-                                                                              .append($('<th>', {width:100}).text('Example')));
-          for (var key in details){
-              var row = $('<tr>', {id:key}).append($('<td>').text(details[key]['type']))
-                  .append($('<td>').text(details[key]['description']))
-                  .append($('<td>').text(details[key]['example']));
-              table.append(row);
-          }
-          $(div_id).append(table);
-          var table = $('<table>', {class:"zebra-striped", width:750}).append($('<tr>')
-                                                                              .append($('<th>', {width:100}).text('Style Type'))
-                                                                              .append($('<th>', {width:200}).text('Description'))
-                                                                              .append($('<th>', {width:100}).text('Example')));
-          for (var key in styles){
-              var row = $('<tr>', {id:key}).append($('<td>').text(styles[key]['type']))
-                  .append($('<td>').text(styles[key]['description']))
-                  .append($('<td>').text(styles[key]['example']));
-              table.append(row);
-          }
-          $(div_id).append(table);
-      }
 
       function query_string() {
           var results = new RegExp('\\?.*').exec(window.location.href);
@@ -61,6 +33,9 @@
           return results[0];
       }
 
+      function selected_radio() {
+          return $('input:radio[name=group]:checked').val();
+      }
       function update_config(config) {
           <!-- Update titles -->
           document.title = config.title;
@@ -71,16 +46,34 @@
           $('#footer').html(config.footer)
           <!-- Update image name -->
           $('#image_name').html(config.image_name)
-          <!-- Update description name -->
-          $('#description_name').html(config.description_name)
+          <!-- Update classes name -->
+          $('#classes_name').html(config.classes_name)
+          <!-- Update class description name -->
+          $('#class_description_name').html(config.class_description_name)
+          <!-- Update downdown -->
+          $('#classes').html('');
+          class_descriptions = {};
+          class_names = [];
+          var classes_obj = $('<ul>', {class: "inputs-list"});
+          $.each(config.classes, function(index, value) {   
+              var v0 = $('<input>', { id: 'radio_' + value.key, type: "radio", name: "group", value : value.key });
+              var v1 = $('<span>').text('  ' + value.name + ' (' + String.fromCharCode(97 + class_names.length) + ')');
+              var v2 = $('<li>');
+              var v3 = $('<label>').append(v0, v1);
+              classes_obj.append(v2.append(v3))
+              class_descriptions[value.key] = value.description;
+              class_names.push(value.key);
+          });
+        $('#classes').append(classes_obj);
+        $('input:radio[name=group]').change(radio_change_handler);
+        $('#radio_' + class_names[0]).attr('checked', true);
+        radio_change_handler();
       }
 
       function update_data(data) {
         if (data.submit_url) { <!-- If we are given a submit url, redirect to it and we are done. -->
             window.location.href = data.submit_url;
         }
-        cur_data = data;
-        draw_table(data.description_type.details, data.description_type.styles, "constraint");
         data_id = data.data_id;
         $('#images').html('');
         $.each(data.images, function(index, value) {   
@@ -108,13 +101,15 @@
       }
 
       function submit_handler(event) {
-          ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, description: $('#description_text').val()}), update_data);
-          $('#description_text').val('');
-          update_character_count()
+          ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, event: selected_radio()}), update_data);
       }
 
       function reload_handler(event) {
           load_data();
+      }
+
+      function radio_change_handler(event) {
+          $('#class_description').html(class_descriptions[selected_radio()]);
       }
 
       function ajax(url, method, data, success, before_send, fail) {
@@ -132,17 +127,24 @@
           });
           request.fail(fail);
       }
-      function update_character_count() {
-           $('#character_count').html('Character Count [' + $('#description_text').val().length + ']');
-      }
 
       $(document).ready(function () {
           load_config();
           load_user();
           $('#submit').click(submit_handler);
           $('#reload').click(reload_handler);
-          $('#description_text').keyup(update_character_count);
-          update_character_count()
+          $(document).keypress(function(e) {
+              if(e.which == 13) {
+                  $('#submit').click()
+              } else if(e.which >= 97 && e.which <= 122) {
+                  var class_name = class_names[e.which - 97];
+                  if (class_name) {
+                      $('input:radio[name=group]:checked').attr('checked', false);
+                      $('#radio_' + class_name).attr('checked', true);
+                      radio_change_handler();
+                  }
+              }
+            });
         });
     </script>
 
@@ -156,18 +158,18 @@
            <h2>Instructions</h2>
             <div id="instructions">
             </div>
-            <div id="constraint"></div>
             <h2 id="image_name"></h2>
-            <div id="images" style="padding-bottom: 40px"></div>
-            <h2 id="description_name"></h2>
-            <h3 id="character_count"></h3>
-            <div id="description"><textarea id="description_text" style="width: 800px; height: 160px; resize:none;"></textarea></div>
+            <div id="images"></div>
+            <h2 id="classes_name"></h2>
+            <div id="classes" style="padding-left: 10px"></div>
             <div>
               <center>
-              <input id="submit" type="submit" class="btn primary" value="Submit">
+              <input id="submit" type="submit" class="btn primary" value="Submit (enter)">
               <input id="reload" type="submit" class="btn secondary" value="Skip Video">
               </center>
             </div>
+            <h2 id="class_description_name"></h2>
+            <div id="class_description"></div>
           </div>
         </div>
       </div>

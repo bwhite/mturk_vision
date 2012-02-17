@@ -1,11 +1,11 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 import bottle
-import argparse
 import base
 import os
-
-
+import mturk_vision
+from . import __path__
+ROOT = os.path.abspath(__path__[0])
 MANAGER = None
 
 
@@ -16,12 +16,7 @@ def index():
 
 @bottle.get('/static/<file_name:re:[a-zA-z_\-\.0-9]+\.(js|png|jpeg|jpg|html|css)>')
 def static(file_name):
-    return bottle.static_file(file_name, './static')
-
-
-@bottle.get('/style.css')
-def styles():
-    return bottle.static_file('style.css', './')
+    return bottle.static_file(file_name, ROOT + '/static')
 
 
 @bottle.get('/user.js')
@@ -61,11 +56,10 @@ def admin_users(secret):
 
 
 @bottle.get('/:secret/quit')
-def admin_users(secret):
+def admin_quit(secret):
     print('Quitting')
     MANAGER.sync()
     quit()
-
 
 
 @bottle.put('/result/')
@@ -83,20 +77,9 @@ def sync_dbs():
         gevent.sleep(5)
 
 
-def main():
+def server(**args):
     global MANAGER
-    # Parse command line
-    parser = argparse.ArgumentParser(description="Serve ")
-    parser.add_argument('--port', help='Run on this port',
-                        default='8080')
-    parser.add_argument('--num_tasks', help='Number of tasks per worker (unused in standalone mode)',
-                        default=100, type=int)
-    parser.add_argument('--mode', help='Number of tasks per worker',
-                        default='standalone', choices=['amt', 'standalone'])
-    parser.add_argument('--type', help='Which AMT job type to run',
-                        default='label', choices=['label', 'match', 'description'])
-    args = vars(parser.parse_args())
-    path_root = os.path.expanduser('~/amt_video/')
+    path_root = os.path.expanduser(args['db'])
     try:
         os.makedirs(path_root)
         existing = False
@@ -105,27 +88,25 @@ def main():
     uri_root = 'leveldb://' + path_root
     args.update(dict((x + '_db_uri', uri_root + x + '.db')
                      for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'description']))
+    sp = lambda x: ROOT + '/static_private/' + x
     if args['type'] == 'label':
         args['response_db_uri'] = uri_root + 'label_response.db'
-        MANAGER = base.AMTVideoClassificationManager(index_path='video_label.html',
-                                                     config_path='video_label_config.js',
-                                                     **args)
+        MANAGER = mturk_vision.AMTVideoClassificationManager(index_path=sp('video_label.html'),
+                                                             config_path=sp('video_label_config.js'),
+                                                             **args)
     elif args['type'] == 'match':
         args['response_db_uri'] = uri_root + 'match_response.db'
-        MANAGER = base.AMTVideoTextMatchManager(index_path='video_match.html',
-                                                     config_path='video_match_config.js',
-                                                     **args)
+        MANAGER = mturk_vision.AMTVideoTextMatchManager(index_path=sp('video_match.html'),
+                                                        config_path=sp('video_match_config.js'),
+                                                        **args)
     elif args['type'] == 'description':
         args['response_db_uri'] = uri_root + 'description_response.db'
-        MANAGER = base.AMTVideoDescriptionManager(index_path='video_description.html',
-                                                  config_path='video_description_config.js',
-                                                  **args)
+        MANAGER = mturk_vision.AMTVideoDescriptionManager(index_path=sp('video_description.html'),
+                                                          config_path=sp('video_description_config.js'),
+                                                          **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if not existing:
-        MANAGER.initial_setup()
+        MANAGER.initial_setup(os.path.expanduser(args['data']))
     gevent.spawn(sync_dbs)
     bottle.run(host='0.0.0.0', port=args['port'], server='gevent')
-
-if __name__ == "__main__":
-    main()
