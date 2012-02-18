@@ -4,6 +4,7 @@ import bottle
 import base
 import os
 import mturk_vision
+import redis
 from . import __path__
 ROOT = os.path.abspath(__path__[0])
 MANAGER = None
@@ -34,10 +35,10 @@ def config():
     return MANAGER.config
 
 
-@bottle.get('/frames/:frame_key')
-def frames(frame_key):
+@bottle.get('/image/:image_key')
+def image(image_key):
     try:
-        data_key = frame_key.rsplit('.', 1)[0]
+        data_key = image_key.rsplit('.', 1)[0]
         cur_data = MANAGER.read_data(data_key)
     except KeyError:
         bottle.abort(404)
@@ -58,7 +59,6 @@ def admin_users(secret):
 @bottle.get('/:secret/quit')
 def admin_quit(secret):
     print('Quitting')
-    MANAGER.sync()
     quit()
 
 
@@ -71,42 +71,32 @@ def make_data(user_id):
     return MANAGER.make_data(user_id)
 
 
-def sync_dbs():
-    while 1:
-        MANAGER.sync()
-        gevent.sleep(5)
-
-
 def server(**args):
     global MANAGER
-    path_root = os.path.expanduser(args['db'])
-    try:
-        os.makedirs(path_root)
-        existing = False
-    except OSError:
-        existing = True
-    uri_root = 'leveldb://' + path_root
-    args.update(dict((x + '_db_uri', uri_root + x + '.db')
-                     for x in ['user', 'key_to_path', 'path_to_key', 'frame', 'description']))
+    args.update(dict((y + '_db', redis.StrictRedis(host='localhost', port=6379, db=x))
+                     for x, y in enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response'])))
+    print(args)
     sp = lambda x: ROOT + '/static_private/' + x
-    if args['type'] == 'label':
-        args['response_db_uri'] = uri_root + 'label_response.db'
+    if args['type'] == 'video_label':
         MANAGER = mturk_vision.AMTVideoClassificationManager(index_path=sp('video_label.html'),
                                                              config_path=sp('video_label_config.js'),
                                                              **args)
-    elif args['type'] == 'match':
-        args['response_db_uri'] = uri_root + 'match_response.db'
+    elif args['type'] == 'video_match':
         MANAGER = mturk_vision.AMTVideoTextMatchManager(index_path=sp('video_match.html'),
                                                         config_path=sp('video_match_config.js'),
                                                         **args)
-    elif args['type'] == 'description':
-        args['response_db_uri'] = uri_root + 'description_response.db'
+    elif args['type'] == 'video_description':
         MANAGER = mturk_vision.AMTVideoDescriptionManager(index_path=sp('video_description.html'),
                                                           config_path=sp('video_description_config.js'),
                                                           **args)
+    elif args['type'] == 'image_label':
+        MANAGER = mturk_vision.AMTImageClassificationManager(index_path=sp('video_label.html'),
+                                                             config_path=sp('image_label_config.js'),
+                                                             **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
-    if not existing:
-        MANAGER.initial_setup(os.path.expanduser(args['data']))
-    gevent.spawn(sync_dbs)
+    if args['setup']:
+        if args['data'] is not None:
+            args['data'] = os.path.expanduser(args['data'])
+        MANAGER.initial_setup(args['data'])
     bottle.run(host='0.0.0.0', port=args['port'], server='gevent')

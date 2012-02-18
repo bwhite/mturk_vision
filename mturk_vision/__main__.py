@@ -5,6 +5,8 @@ import mturk_vision
 def main():
     # Parse command line
     parser = argparse.ArgumentParser(description="Serve ")
+    parser.add_argument('--setup', help='Run to setup file mappings', action='store_true')
+    parser.add_argument('--data', help='Path to the data directory', default=None)
     parser.add_argument('--port', help='Run on this port',
                         default='8080')
     parser.add_argument('--num_tasks', help='Number of tasks per worker (unused in standalone mode)',
@@ -12,9 +14,7 @@ def main():
     parser.add_argument('--mode', help='Number of tasks per worker',
                         default='standalone', choices=['amt', 'standalone'])
     parser.add_argument('--type', help='Which AMT job type to run',
-                        default='label', choices=['label', 'match', 'description'])
-    parser.add_argument('--data', help='Path to the data directory', default='data')
-    parser.add_argument('--db', help='Path to the database directory', default='~/amt_video/')
+                        default='image_label', choices=['image_label', 'video_label', 'video_match', 'video_description'])
     args = vars(parser.parse_args())
     mturk_vision.server(**args)
 

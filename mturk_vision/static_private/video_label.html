@@ -50,24 +50,29 @@
           $('#classes_name').html(config.classes_name)
           <!-- Update class description name -->
           $('#class_description_name').html(config.class_description_name)
+          <!-- Set name of skip button or hide it -->
+          if (config.skip_button_name == "") {
+              $('#reload').hide();
+          } else {
+              $('#reload').attr('value', config.skip_button_name);
+          }
           <!-- Update downdown -->
           $('#classes').html('');
           class_descriptions = {};
           class_names = [];
           var classes_obj = $('<ul>', {class: "inputs-list"});
           $.each(config.classes, function(index, value) {   
-              var v0 = $('<input>', { id: 'radio_' + value.key, type: "radio", name: "group", value : value.key });
-              var v1 = $('<span>').text('  ' + value.name + ' (' + String.fromCharCode(97 + class_names.length) + ')');
+              var v0 = $('<input>', { id: 'submit_' + value.key, type: "submit", class: "btn secondary", name : value.key , value: value.name + ' (' + String.fromCharCode(97 + class_names.length) + ')'});
               var v2 = $('<li>');
-              var v3 = $('<label>').append(v0, v1);
+              var v3 = $('<label>').append(v0);
               classes_obj.append(v2.append(v3))
               class_descriptions[value.key] = value.description;
               class_names.push(value.key);
           });
         $('#classes').append(classes_obj);
-        $('input:radio[name=group]').change(radio_change_handler);
-        $('#radio_' + class_names[0]).attr('checked', true);
-        radio_change_handler();
+        $.each(config.classes, function(index, value) {
+            $('#submit_' + value.key).click(submit_handler);
+        });
       }
 
       function update_data(data) {
@@ -101,7 +106,7 @@
       }
 
       function submit_handler(event) {
-          ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, event: selected_radio()}), update_data);
+          ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, data: $(this).attr('name')}), update_data);
       }
 
       function reload_handler(event) {
@@ -131,7 +136,6 @@
       $(document).ready(function () {
           load_config();
           load_user();
-          $('#submit').click(submit_handler);
           $('#reload').click(reload_handler);
           $(document).keypress(function(e) {
               if(e.which == 13) {
@@ -139,9 +143,7 @@
               } else if(e.which >= 97 && e.which <= 122) {
                   var class_name = class_names[e.which - 97];
                   if (class_name) {
-                      $('input:radio[name=group]:checked').attr('checked', false);
-                      $('#radio_' + class_name).attr('checked', true);
-                      radio_change_handler();
+                      $('#submit_' + class_name).click();
                   }
               }
             });
@@ -164,8 +166,7 @@
             <div id="classes" style="padding-left: 10px"></div>
             <div>
               <center>
-              <input id="submit" type="submit" class="btn primary" value="Submit (enter)">
-              <input id="reload" type="submit" class="btn secondary" value="Skip Video">
+              <input id="reload" type="submit" class="btn secondary" value="">
               </center>
             </div>
             <h2 id="class_description_name"></h2>

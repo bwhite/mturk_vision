@@ -39,15 +39,10 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
                 for frame_path in frame_paths:
                     frame_db[event][video].append(frame_path)
         self.frame_db.update(frame_db)
-        frames = []
         for event in frame_db:
             for video in frame_db[event]:
                 for frame in frame_db[event][video]:
-                    frames.append(frame)
-        for frame in frames:
-            key = self.urlsafe_uuid()
-            self.path_to_key_db[frame] = key
-            self.key_to_path_db[key] = frame
+                    self.add_path(frame)
 
     def make_data(self, user_id):
         try:
@@ -61,7 +56,7 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
         self.response_db[out['data_id']] = {'event': event, 'video': video,
                                             'user_id': user_id, 'start_time': time.time()}
         for frame in self.frame_db[event][video]:
-            out['images'].append({"src": 'frames/%s.jpg' % self.path_to_key_db[frame], "width": 250})
+            out['images'].append({"src": 'image/%s.jpg' % self.path_to_key_db[frame], "width": 250})
         return out
 
     def admin_results(self, secret):
@@ -146,7 +141,7 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         for event, video in event_videos:
             cur_out = []
             for frame in self.frame_db[event][video]:
-                cur_out.append({"src": 'frames/%s.jpg' % self.path_to_key_db[frame], "width": 250})
+                cur_out.append({"src": 'image/%s.jpg' % self.path_to_key_db[frame], "width": 250})
             out['images'].append(cur_out)
         return out
 

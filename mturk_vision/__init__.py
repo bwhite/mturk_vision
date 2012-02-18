@@ -1,4 +1,5 @@
 from base import AMTManager, UserNotFinishedException
 from video import AMTVideoClassificationManager, AMTVideoTextMatchManager, AMTVideoDescriptionManager
+from image import AMTImageClassificationManager
 from server import server
 from tools import create_hit
