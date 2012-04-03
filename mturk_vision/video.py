@@ -10,10 +10,10 @@ import json
 
 class AMTVideoClassificationManager(mturk_vision.AMTManager):
 
-    def __init__(self, frame_db_uri, response_db_uri, *args, **kw):
+    def __init__(self, frame_db, response_db, *args, **kw):
         super(AMTVideoClassificationManager, self).__init__(*args, **kw)
-        self.frame_db = Shove(frame_db_uri)  # [event][video] = frames
-        self.response_db = Shove(response_db_uri)
+        self.frame_db = frame_db  # [event][video] = frames
+        self.response_db = response_db
         self.dbs += [self.frame_db, self.response_db]
 
     def _prune_frame_paths(self, frame_paths, target_frames=10):
@@ -22,61 +22,71 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
         frame_paths = frame_paths[::2]
         return frame_paths[::int(max(1, math.ceil(len(frame_paths) / target_frames)))]
 
-    def initial_setup(self, data_root='./data/'):
+    def initial_setup(self, data_root):
+        if data_root == None:
+            data_root ='./data/'
         # Build initial frame structure
-        frame_db = {}  # [event][video] = frames
+        path_to_key_db = self.path_to_key_db.pipeline()
+        key_to_path_db = self.key_to_path_db.pipeline()
+        frame_db = self.frame_db.pipeline()
+        frame_db_local = {}  # [event][video] = frames
         for event_path in glob.glob('%s/*' % data_root):
             if not os.path.isdir(event_path):
                 continue
             event = os.path.basename(event_path)
-            frame_db[event] = {}
+            frame_db_local[event] = {}
             for video_path in glob.glob(event_path + '/*'):
                 if not os.path.isdir(video_path):
                     continue
                 video = os.path.basename(video_path)
-                frame_db[event][video] = []
+                frame_db_local[event][video] = []
                 frame_paths = self._prune_frame_paths(sorted(glob.glob(video_path + '/*.jpg')))
                 for frame_path in frame_paths:
-                    frame_db[event][video].append(frame_path)
-        self.frame_db.update(frame_db)
-        for event in frame_db:
-            for video in frame_db[event]:
-                for frame in frame_db[event][video]:
-                    self.add_path(frame)
+                    frame_db_local[event][video].append(os.path.abspath(frame_path))
+        for event, data in frame_db_local.items():
+            frame_db.hmset(event, dict((x, json.dumps(y)) for x, y in data.items()))
+            print(event)
+        for event in frame_db_local:
+            for video in frame_db_local[event]:
+                for fn in frame_db_local[event][video]:
+                    key = self.urlsafe_uuid()
+                    path_to_key_db.set(fn, key)
+                    key_to_path_db.set(key, fn)
+        path_to_key_db.execute()
+        key_to_path_db.execute()
+        frame_db.execute()
 
     def make_data(self, user_id):
         try:
             return self._user_finished(user_id)
         except mturk_vision.UserNotFinishedException:
             pass
-        event = random.choice(list(self.frame_db))
-        video = random.choice(list(self.frame_db[event]))
+        event = self.frame_db.randomkey()
+        video = random.choice(self.frame_db.hkeys(event))
         out = {"images": [],
                "data_id": self.urlsafe_uuid()}
-        self.response_db[out['data_id']] = {'event': event, 'video': video,
-                                            'user_id': user_id, 'start_time': time.time()}
-        for frame in self.frame_db[event][video]:
-            out['images'].append({"src": 'image/%s.jpg' % self.path_to_key_db[frame], "width": 250})
+        self.response_db.hmset(out['data_id'], {'event': event, 'video': video,
+                                                'user_id': user_id, 'start_time': time.time()})
+        for frame in json.loads(self.frame_db.hget(event, video)):
+            out['images'].append({"src": 'image/%s.jpg' % self.path_to_key_db.get(frame), "width": 250})  # TODO(brandyn): batch this
         return out
 
     def admin_results(self, secret):
         """Return contents of response_db"""
         if secret == self.secret:
-            return json.dumps(dict(self.response_db))
+            keys = self.response_db.keys('*')
+            return json.dumps(dict(zip(keys, self.response_db.mget(keys))))
 
-    def result(self, user_id, data_id, event):
+    def result(self, user_id, data_id, data):
         #assert request['user_id'] in USERS_DB
-        response = self.response_db[data_id]
-        assert response['user_id'] == user_id
+        assert self.response_db.hget(data_id, 'user_id') == user_id
         # Don't double count old submissions
-        if 'user_event' not in response:
-            response['user_event'] = event
-            if event == response['event']:
+        if not self.response_db.hexists(data_id, 'user_event'):
+            if data == self.response_db.hget(data_id, 'event'):
                 super(AMTVideoClassificationManager, self).result(user_id, True)
             else:
                 super(AMTVideoClassificationManager, self).result(user_id, False)
-            response['end_time'] = time.time()
-            self.response_db[data_id] = response
+            self.response_db.hmset(data_id, {'user_event': data, 'end_time': time.time()})
         return self.make_data(user_id)
 
 

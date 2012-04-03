@@ -73,7 +73,7 @@ def make_data(user_id):
 
 def server(**args):
     global MANAGER
-    args.update(dict((y + '_db', redis.StrictRedis(host='localhost', port=6379, db=x))
+    args.update(dict((y + '_db', redis.StrictRedis(host=args['redis_address'], port=args['redis_port'], db=x))
                      for x, y in enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response'])))
     print(args)
     sp = lambda x: ROOT + '/static_private/' + x

@@ -9,6 +9,10 @@ def main():
     parser.add_argument('--data', help='Path to the data directory', default=None)
     parser.add_argument('--port', help='Run on this port',
                         default='8080')
+    parser.add_argument('--redis_address', help='Redis server address',
+                        default='localhost')
+    parser.add_argument('--redis_port', help='Redis server port',
+                        default=6379, type=int)
     parser.add_argument('--num_tasks', help='Number of tasks per worker (unused in standalone mode)',
                         default=100, type=int)
     parser.add_argument('--mode', help='Number of tasks per worker',
