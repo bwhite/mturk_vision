@@ -92,9 +92,9 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
 
 class AMTVideoTextMatchManager(AMTVideoClassificationManager):
 
-    def __init__(self, description_db_uri, extra_same_class=4, extra_other_class=5, *args, **kw):
+    def __init__(self, description_db, extra_same_class=4, extra_other_class=5, *args, **kw):
         super(AMTVideoTextMatchManager, self).__init__(*args, **kw)
-        self.description_db = Shove(description_db_uri)  # [video] = {event, description}
+        self.description_db = description_db  # [video] = {event, description}
         self.extra_same_class = extra_same_class
         self.extra_other_class = extra_other_class
         self.dbs += [self.description_db]
@@ -110,10 +110,7 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         """
         previous = set(previous)
         for event in events:
-            while 1:
-                out = random.choice(list(self.frame_db[event]))
-                if out not in previous:
-                    break
+            out = random.choice(list(set(self.frame_db.hkeys(event)) - previous))
             previous.add(out)
             yield event, out
 
@@ -123,53 +120,49 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         except mturk_vision.UserNotFinishedException:
             pass
         # Select a description
-        user = self.users_db[user_id]
-        previous_video_descriptions = user.get('previous_video_descriptions', set())
+        previous_video_descriptions = self.users_db.hget(user_id, 'previous_video_descriptions')
+        previous_video_descriptions = set() if previous_video_descriptions is None else set(json.loads(previous_video_descriptions))
         try:
-            available_videos = list(set(self.description_db) - previous_video_descriptions)
+            available_videos = list(set(self.description_db.keys()) - previous_video_descriptions)
             print('Videos Left[%d]' % len(available_videos))
             positive_video = random.choice(available_videos)
         except IndexError:  # There are no more left
             return self._user_finished(user_id, force=True)
         # Write the updated prev descriptions to the user db
         previous_video_descriptions.add(positive_video)
-        user['previous_video_descriptions'] = previous_video_descriptions
-        self.users_db[user_id] = user
+        self.users_db.hset(user_id, 'previous_video_description', json.dumps(list(previous_video_descriptions)))
         # Select other videos from the same class
-        positive_event = self.description_db[positive_video]['event']
+        positive_event = self.description_db.hget(positive_video, 'event')
         event_videos = [(positive_event, positive_video)]
         event_videos += list(self._random_videos([positive_event] * self.extra_same_class))
-        other_classes = list(set(self.frame_db) - set(positive_event))
+        other_classes = list(set(self.frame_db.keys()) - set(positive_event))
         event_videos += list(self._random_videos(random.choice(other_classes) for x in range(self.extra_other_class)))
         random.shuffle(event_videos)
         out = {'images': [],
                'data_id': self.urlsafe_uuid(),
-               'description': self.description_db[positive_video]['description']}
-        self.response_db[out['data_id']] = {'event_videos': event_videos, 'positive_video': positive_video,
-                                            'positive_event': positive_event,
-                                            'user_id': user_id, 'start_time': time.time()}
+               'description': self.description_db.hget(positive_video, 'description')}
+        self.response_db.hmset(out['data_id'], {'event_videos': json.dumps(event_videos), 'positive_video': positive_video,
+                                                'positive_event': positive_event,
+                                                'user_id': user_id, 'start_time': time.time()})
         for event, video in event_videos:
             cur_out = []
-            for frame in self.frame_db[event][video]:
-                cur_out.append({"src": 'image/%s.jpg' % self.path_to_key_db[frame], "width": 250})
+            for frame in json.loads(self.frame_db.hget(event, video)):
+                cur_out.append({"src": 'image/%s.jpg' % self.path_to_key.get(frame), "width": 250})
             out['images'].append(cur_out)
         return out
 
     def result(self, user_id, data_id, video_index):
         #{u'video_index': 6, u'user_id': u'zXIJYA5LSFOxcuuSoKRJWQ', u'data_id': u'C6CGNbZJRlKsFnVWI078_Q'}
         #assert request['user_id'] in USERS_DB
-        response = self.response_db[data_id]
-        assert response['user_id'] == user_id
-        assert 0 <= video_index < len(response['event_videos'])
+        assert self.resonse_db.hget(data_id, 'user_id') == user_id
+        assert 0 <= video_index < len(self.response_db.hget(data_id, 'event_videos'))
         # Don't double count old submissions
-        if 'video_index' not in response:
-            response['video_index'] = video_index
-            if response['event_videos'][video_index][1] == response['positive_video']:
+        if not self.response_db.hexists(data_id, 'video_index'):
+            if json.loads(self.response_db.hget(data_id, 'event_videos'))[video_index][1] == self.response_db.hget(data_id, 'positive_video'):
                 super(AMTVideoClassificationManager, self).result(user_id, True)
             else:
                 super(AMTVideoClassificationManager, self).result(user_id, False)
-            response['end_time'] = time.time()
-            self.response_db[data_id] = response
+            self.response_db.hmset(data_id, {'video_index': video_index, 'end_time': time.time()})
         return self.make_data(user_id)
 
 
