@@ -168,9 +168,9 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
 
 class AMTVideoDescriptionManager(AMTVideoClassificationManager):
 
-    def __init__(self, description_db_uri, *args, **kw):
+    def __init__(self, description_db, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
-        self.description_db = Shove(description_db_uri)  # [video] = {event, description}
+        self.description_db = description_db  # [video] = {event, description, description_type}
         self.dbs += [self.description_db]
 
     def _generate_description_type(self):
@@ -179,7 +179,6 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
                       'stuff_noun': {'description': 'Background details, textures, and materials.', 'example': 'sky, grass, trees, water, road, carpet, brick wall, wood floor, rocks', 'type': 'Background Objects (nouns)'},
                       'scene': {'description': 'Name of the scene', 'example': 'outdoors, indoors, cricket field, skateboard park', 'type': 'Scene Name (nouns)'}}
         s = {}
-        #s['words'] = {'type': 'Words by Priority', 'example': 'word0, word1, word2a word2b, word3', 'description': 'The first word (e.g., word0 in the example) is the most noticeable in the video and the words are of the detail type(s) requested.  Separate words by commas, multiple related words are allowed together (e.g., word2a word2b).  The description should be less than 140 characters.'}
         s['words'] = {'type': 'Freeform Text', 'example': 'The man does a skateboard trick outdoors on a ramp using a red board under a blue sky near a green tree', 'description': 'The description should be less than 140 characters and you do not need formatting.'}
         return {'details': d, 'styles': s}
 
@@ -189,23 +188,20 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
             return out
         if description_type is None:
             description_type = self._generate_description_type()
-        response = self.response_db[out['data_id']]
-        response['description_type'] = out['description_type'] = description_type
-        self.response_db[out['data_id']] = response
+        out['description_type'] = description_type
+        self.response_db.hset(out['data_id'], 'description_type', json.dumps(description_type))
         return out
     
     def result(self, user_id, data_id, description):
-        response = self.response_db[data_id]
-        assert response['user_id'] == user_id
+        assert self.response_db.hget(data_id, 'user_id') == user_id
         # Don't double count old submissions
-        if 'description' not in response:
-            response['description'] = description
+        if not self.response_db.hexists(data_id, 'description'):
             super(AMTVideoClassificationManager, self).result(user_id, False)
-            response['end_time'] = time.time()
-            self.response_db[data_id] = response
-        description_type = response['description_type']
-        if response['video'] not in self.description_db:
-            self.description_db[response['video']] = [{'event': response['event'],
-                                                       'description': response['description'],
-                                                       'description_type': description_type}]
-        return self.make_data(user_id, description_type)
+            self.response_db.hmset(data_id, {'description': description, 'end_time': time.time()})
+        description_type = self.response_db.hget(data_id, 'description_type')
+        video = self.response_db.hget(data_id, 'video')
+        if not self.description_db.exists(video):
+            self.description_db.hmset(video, {'event': self.response_db.hget(data_id, 'event'),
+                                              'description': self.response_db.hget(data_id, 'description'),
+                                              'description_type': description_type})
+        return self.make_data(user_id, json.loads(description_type))

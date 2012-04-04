@@ -73,8 +73,10 @@ def make_data(user_id):
 
 def server(**args):
     global MANAGER
+    db_nums = list(enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response']))
+    print(db_nums)
     args.update(dict((y + '_db', redis.StrictRedis(host=args['redis_address'], port=args['redis_port'], db=x))
-                     for x, y in enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response'])))
+                     for x, y in db_nums))
     print(args)
     sp = lambda x: ROOT + '/static_private/' + x
     if args['type'] == 'video_label':
