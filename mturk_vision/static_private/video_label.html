@@ -33,9 +33,6 @@
           return results[0];
       }
 
-      function selected_radio() {
-          return $('input:radio[name=group]:checked').val();
-      }
       function update_config(config) {
           <!-- Update titles -->
           document.title = config.title;
@@ -51,7 +48,7 @@
           <!-- Update class description name -->
           $('#class_description_name').html(config.class_description_name)
           <!-- Set name of skip button or hide it -->
-          if (config.skip_button_name == "") {
+          if (config.skip_button_name == "" || config.skip_button_name == undefined) {
               $('#reload').hide();
           } else {
               $('#reload').attr('value', config.skip_button_name);
@@ -72,6 +69,7 @@
         $('#classes').append(classes_obj);
         $.each(config.classes, function(index, value) {
             $('#submit_' + value.key).click(submit_handler);
+            $('#submit_' + value.key).mouseover(radio_change_handler);
         });
       }
 
@@ -113,8 +111,9 @@
           load_data();
       }
 
-      function radio_change_handler(event) {
-          $('#class_description').html(class_descriptions[selected_radio()]);
+      function radio_change_handler() {
+          var cur_event = $(this).attr('name');
+          $('#class_description').html(class_descriptions[cur_event]);
       }
 
       function ajax(url, method, data, success, before_send, fail) {

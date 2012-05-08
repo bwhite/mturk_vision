@@ -147,14 +147,14 @@ class AMTVideoTextMatchManager(AMTVideoClassificationManager):
         for event, video in event_videos:
             cur_out = []
             for frame in json.loads(self.frame_db.hget(event, video)):
-                cur_out.append({"src": 'image/%s.jpg' % self.path_to_key.get(frame), "width": 250})
+                cur_out.append({"src": 'image/%s.jpg' % self.path_to_key_db.get(frame), "width": 250})
             out['images'].append(cur_out)
         return out
 
     def result(self, user_id, data_id, video_index):
         #{u'video_index': 6, u'user_id': u'zXIJYA5LSFOxcuuSoKRJWQ', u'data_id': u'C6CGNbZJRlKsFnVWI078_Q'}
         #assert request['user_id'] in USERS_DB
-        assert self.resonse_db.hget(data_id, 'user_id') == user_id
+        assert self.response_db.hget(data_id, 'user_id') == user_id
         assert 0 <= video_index < len(self.response_db.hget(data_id, 'event_videos'))
         # Don't double count old submissions
         if not self.response_db.hexists(data_id, 'video_index'):
