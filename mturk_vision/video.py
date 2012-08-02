@@ -180,7 +180,6 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
     def __init__(self, description_db, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
         self.description_db = description_db  # [video] = {event, description}
-        self.
         self.dbs += [self.description_db]
 
     def _generate_description_type(self):
