@@ -14,6 +14,7 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
         super(AMTVideoClassificationManager, self).__init__(*args, **kw)
         self.frame_db = frame_db  # [event][video] = frames
         self.response_db = response_db
+        self.single_frame = True
         self.dbs += [self.frame_db, self.response_db]
 
     def _prune_frame_paths(self, frame_paths, target_frames=10):
@@ -65,10 +66,18 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
         video = random.choice(self.frame_db.hkeys(event))
         out = {"images": [],
                "data_id": self.urlsafe_uuid()}
-        self.response_db.hmset(out['data_id'], {'event': event, 'video': video,
-                                                'user_id': user_id, 'start_time': time.time()})
-        for frame in json.loads(self.frame_db.hget(event, video)):
+        frames = []
+        if self.single_frame:
+            frame = random.choice(json.loads(self.frame_db.hget(event, video)))
+            frames.append(frame)
             out['images'].append({"src": 'image/%s.jpg' % self.path_to_key_db.get(frame), "width": 250})  # TODO(brandyn): batch this
+        else:
+            for frame in json.loads(self.frame_db.hget(event, video)):
+                frames.append(frame)
+                out['images'].append({"src": 'image/%s.jpg' % self.path_to_key_db.get(frame), "width": 250})  # TODO(brandyn): batch this
+        self.response_db.hmset(out['data_id'], {'event': event, 'video': video,
+                                                'user_id': user_id, 'start_time': time.time(),
+                                                'images': json.dumps(frames)})
         return out
 
     def admin_results(self, secret):
@@ -171,6 +180,7 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
     def __init__(self, description_db, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
         self.description_db = description_db  # [video] = {event, description}
+        self.
         self.dbs += [self.description_db]
 
     def _generate_description_type(self):
