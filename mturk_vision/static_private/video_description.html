@@ -73,6 +73,10 @@
           $('#image_name').html(config.image_name)
           <!-- Update description name -->
           $('#description_name').html(config.description_name)
+          <!-- Update examples name -->
+          $('#examples_name').html(config.examples_name)
+          <!-- Update examples -->
+          $('#examples').html(config.examples)
       }
 
       function update_data(data) {
@@ -80,7 +84,7 @@
             window.location.href = data.submit_url;
         }
         cur_data = data;
-        draw_table(data.description_type.details, data.description_type.styles, "constraint");
+        <!-- draw_table(data.description_type.details, data.description_type.styles, "constraint");-->
         data_id = data.data_id;
         $('#images').html('');
         $.each(data.images, function(index, value) {   
@@ -153,10 +157,6 @@
         </div>
         <div class="row">
           <div class="span14">
-           <h2>Instructions</h2>
-            <div id="instructions">
-            </div>
-            <div id="constraint"></div>
             <h2 id="image_name"></h2>
             <div id="images" style="padding-bottom: 40px"></div>
             <h2 id="description_name"></h2>
@@ -168,6 +168,11 @@
               <input id="reload" type="submit" class="btn secondary" value="Skip Video">
               </center>
             </div>
+           <h2>Instructions</h2>
+           <div id="instructions"></div>
+           <div id="constraint"></div>
+           <h2 id="examples_name"></h2>
+           <div id="examples"></div>
           </div>
         </div>
       </div>

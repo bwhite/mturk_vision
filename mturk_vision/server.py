@@ -69,10 +69,20 @@ def result():
 
 def make_data(user_id):
     return MANAGER.make_data(user_id)
+# AMTManagerDB's
+# 0: users
+# 1: key_to_path
+# 2: path_to_key
+# AMTVideoClassificationManager
+# 3: frame
+# 6: response
+# AMTVideoTextMatchManager / AMTVideoDescriptionManager (these inherit AMTVideoClassificationManager)
+# 4: description
 
 
 def server(**args):
     global MANAGER
+    
     db_nums = list(enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response']))
     print(db_nums)
     args.update(dict((y + '_db', redis.StrictRedis(host=args['redis_address'], port=args['redis_port'], db=x))

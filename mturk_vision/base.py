@@ -74,8 +74,8 @@ class AMTManager(object):
     def admin_users(self, secret):
         """Return contents of users_db"""
         if secret == self.secret:
-            keys = self.users_db.keys('*')
-            return json.dumps(dict(zip(keys, self.users_db.mget(keys))))
+            keys = self.users_db.keys()
+            return json.dumps(dict((k, self.users_db.hgetall(k)) for k in keys))
 
     def _user_finished(self, user_id, force=False):
         """Check if the user has finished their tasks, if so output the return dictionary.

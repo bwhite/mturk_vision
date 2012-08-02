@@ -74,8 +74,8 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
     def admin_results(self, secret):
         """Return contents of response_db"""
         if secret == self.secret:
-            keys = self.response_db.keys('*')
-            return json.dumps(dict(zip(keys, self.response_db.mget(keys))))
+            keys = self.response_db.keys()
+            return json.dumps(dict((k, self.response_db.hgetall(k)) for k in keys))
 
     def result(self, user_id, data_id, data):
         #assert request['user_id'] in USERS_DB
@@ -170,7 +170,7 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
 
     def __init__(self, description_db, *args, **kw):
         super(AMTVideoDescriptionManager, self).__init__(*args, **kw)
-        self.description_db = description_db  # [video] = {event, description, description_type}
+        self.description_db = description_db  # [video] = {event, description}
         self.dbs += [self.description_db]
 
     def _generate_description_type(self):
@@ -182,14 +182,10 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
         s['words'] = {'type': 'Freeform Text', 'example': 'The man does a skateboard trick outdoors on a ramp using a red board under a blue sky near a green tree', 'description': 'The description should be less than 140 characters and you do not need formatting.'}
         return {'details': d, 'styles': s}
 
-    def make_data(self, user_id, description_type=None):
+    def make_data(self, user_id):
         out = super(AMTVideoDescriptionManager, self).make_data(user_id)
         if 'data_id' not in out:  # User is done
             return out
-        if description_type is None:
-            description_type = self._generate_description_type()
-        out['description_type'] = description_type
-        self.response_db.hset(out['data_id'], 'description_type', json.dumps(description_type))
         return out
     
     def result(self, user_id, data_id, description):
@@ -198,10 +194,8 @@ class AMTVideoDescriptionManager(AMTVideoClassificationManager):
         if not self.response_db.hexists(data_id, 'description'):
             super(AMTVideoClassificationManager, self).result(user_id, False)
             self.response_db.hmset(data_id, {'description': description, 'end_time': time.time()})
-        description_type = self.response_db.hget(data_id, 'description_type')
         video = self.response_db.hget(data_id, 'video')
         if not self.description_db.exists(video):
             self.description_db.hmset(video, {'event': self.response_db.hget(data_id, 'event'),
-                                              'description': self.response_db.hget(data_id, 'description'),
-                                              'description_type': description_type})
-        return self.make_data(user_id, json.loads(description_type))
+                                              'description': self.response_db.hget(data_id, 'description')})
+        return self.make_data(user_id)
