@@ -105,6 +105,10 @@ def server(**args):
         MANAGER = mturk_vision.AMTImageClassificationManager(index_path=sp('video_label.html'),
                                                              config_path=sp('image_label_config.js'),
                                                              **args)
+    elif args['type'] == 'image_entity':
+        MANAGER = mturk_vision.AMTImageEntityManager(index_path=sp('video_label.html'),
+                                                     config_path=sp('image_label_config.js'),
+                                                     **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['setup']:
