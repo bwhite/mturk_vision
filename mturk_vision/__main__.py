@@ -18,7 +18,8 @@ def main():
     parser.add_argument('--mode', help='Number of tasks per worker',
                         default='standalone', choices=['amt', 'standalone'])
     parser.add_argument('--type', help='Which AMT job type to run',
-                        default='image_label', choices=['image_label', 'image_entity', 'video_label', 'video_match', 'video_description'])
+                        default='image_label', choices=['image_label', 'image_entity', 'image_segments',
+                                                        'video_label', 'video_match', 'video_description'])
     args = vars(parser.parse_args())
     mturk_vision.server(**args)
 

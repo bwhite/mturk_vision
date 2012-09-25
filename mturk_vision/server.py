@@ -46,6 +46,15 @@ def image(image_key):
     return cur_data
 
 
+@bottle.get('/data/:data_key')
+def metadata(data_key):
+    try:
+        cur_data = MANAGER.read_data(data_key)
+    except KeyError:
+        bottle.abort(404)
+    return cur_data
+
+
 @bottle.get('/:secret/results.js')
 def admin_results(secret):
     return MANAGER.admin_results(secret)
@@ -107,8 +116,12 @@ def server(**args):
                                                              **args)
     elif args['type'] == 'image_entity':
         MANAGER = mturk_vision.AMTImageEntityManager(index_path=sp('video_label.html'),
-                                                     config_path=sp('image_label_config.js'),
+                                                     config_path=sp('image_entity_config.js'),
                                                      **args)
+    elif args['type'] == 'image_segments':
+        MANAGER = mturk_vision.AMTImageSegmentsManager(index_path=sp('image_segments.html'),
+                                                       config_path=sp('image_segments_config.js'),
+                                                       **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['setup']:

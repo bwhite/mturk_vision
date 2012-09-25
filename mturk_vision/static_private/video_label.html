@@ -78,6 +78,10 @@
             window.location.href = data.submit_url;
         }
         data_id = data.data_id;
+        $('#entity_name').html('');
+        if (data.entity_name) {
+            $('#entity_name').html(data.entity_name);
+        }
         $('#images').html('');
         $.each(data.images, function(index, value) {   
             $('#images').append($('<img>', {src: value.src,
@@ -159,6 +163,7 @@
            <h2>Instructions</h2>
             <div id="instructions">
             </div>
+            <div id="entity_name"></div>
             <h2 id="image_name"></h2>
             <div id="images"></div>
             <h2 id="classes_name"></h2>

@@ -9,6 +9,9 @@ class AMTImageEntityManager(mturk_vision.AMTImageClassificationManager):
         super(AMTImageEntityManager, self).__init__(*args, **kw)
 
     def initial_setup(self, data_root):
+        self.path_to_key_db.flushdb()
+        self.key_to_path_db.flushdb()
+        self.image_db.flushdb()
         path_to_key_db = self.path_to_key_db.pipeline()
         key_to_path_db = self.key_to_path_db.pipeline()
         image_db = self.image_db.pipeline()
@@ -27,5 +30,5 @@ class AMTImageEntityManager(mturk_vision.AMTImageClassificationManager):
         path = self.key_to_path_db.get(out['images'][0]['src'].split('/', 1)[1])
         print(path)
         entity_name = os.path.basename(os.path.dirname(path))
-        out['name'] = entity_name
+        out['entity_name'] = '<h2>Entity Name: %s</h2>' % entity_name
         return out

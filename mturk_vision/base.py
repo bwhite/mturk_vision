@@ -2,6 +2,8 @@ import base64
 import uuid
 import json
 import time
+import gevent
+import random
 
 
 class UserNotFinishedException(Exception):
@@ -20,6 +22,7 @@ class AMTManager(object):
         self.dbs = [self.key_to_path_db, self.path_to_key_db, self.users_db]
         self.index_path = index_path
         self.config_path = config_path
+        self.cache = {}
         self._make_secret()
 
     @property
@@ -69,7 +72,21 @@ class AMTManager(object):
         Raises:
             KeyError: Data key not in DB
         """
-        return open(self.key_to_path_db.get(data_key)).read()
+        path = self.key_to_path_db.get(data_key)
+        if path is None:
+            raise KeyError
+        try:
+            return self.cache[path]
+        except KeyError:
+            return open(path).read()
+
+    def _cache_path(self, path):
+        st = time.time()
+        self.cache[path] = open(path).read()
+        print('Loaded[%s][%f]' % (path, time.time() - st))
+
+    def cache_path(self, path, delay=.25):
+        gevent.spawn_later(delay, self._cache_path, path)
 
     def admin_users(self, secret):
         """Return contents of users_db"""
