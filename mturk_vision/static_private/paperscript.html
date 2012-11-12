@@ -1,0 +1,69 @@
+<script type="text/paperscript" canvas="myCanvas">
+// Create a new path once, when the script is executed:
+
+// This function is called whenever the user
+// clicks the mouse in the view:
+click_mode = 0; // 0: No-click   1: Set   2: Un-set
+selected_objects = {}
+var hitOptions = {
+    segments: true,
+    stroke: true,
+    fill: true,
+    tolerance: 5,
+};
+
+
+function displaySelected() {$('#selected').html(Object.keys(selected_objects).join(', '));}
+
+function onMouseDown(event) {
+    var hitResult = project.hitTest(event.point, hitOptions);
+    if (hitResult) {
+        var alpha = hitResult.item.fillColor.alpha;
+        if (alpha == 0. && (click_mode != 2)) {
+            click_mode = 1;
+            hitResult.item.fillColor = new HslColor(180, 1, .4, .5);
+            selected_objects[hitResult.item.name] = 1;
+            displaySelected();
+        } else if (click_mode != 1) {
+            click_mode = 2;
+            hitResult.item.fillColor = new HslColor(180, 1, .4, 0.);
+            delete selected_objects[hitResult.item.name];
+            displaySelected();
+        }
+    }
+}
+
+function onMouseUp(event) {click_mode = 0;}
+
+
+function onMouseMove(event) {
+    var hitResult = project.hitTest(event.point, hitOptions);
+     project.activeLayer.selected = false;
+    if (hitResult && hitResult.item)
+        hitResult.item.selected = true;   
+}
+
+tool.minDistance = 10;
+
+function onMouseDrag(event) {onMouseDown(event);}
+
+
+function render_hulls(hulls) {
+    var raster = new Raster('image');
+    raster.scale(1);
+    raster.position = view.center;
+
+    $.each(hulls, function (i, hull) {
+        var myPath = new Path();
+        myPath.closed = true;
+        myPath.strokeColor = 'black';
+        myPath.fillColor = new HslColor(180, 1, .4, 0);
+        myPath.name = i;
+        $.each(hull, function(j, xy) {
+            myPath.add(new Point(xy[0], xy[1]));
+        });
+    });
+}
+
+// Move the raster to the center of the view
+</script>
