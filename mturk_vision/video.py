@@ -1,5 +1,4 @@
 import mturk_vision
-from shove import Shove
 import random
 import math
 import glob

@@ -13,7 +13,7 @@ class UserNotFinishedException(Exception):
 class AMTManager(object):
     
     def __init__(self, mode, num_tasks, index_path, config_path, users_db,
-                 key_to_path_db, path_to_key_db, **kw):
+                 key_to_path_db, path_to_key_db, data_source, **kw):
         self.mode = mode
         self.num_tasks = num_tasks
         self.users_db = users_db
@@ -23,6 +23,7 @@ class AMTManager(object):
         self.index_path = index_path
         self.config_path = config_path
         self.cache = {}
+        self.data_source = data_source
         self._make_secret()
 
     @property
@@ -63,6 +64,12 @@ class AMTManager(object):
         self.users_db.hmset(user_id, out)
         return {"user_id": user_id}
 
+    def row_column_encode(self, row, column):
+        return base64.b64encode(row) + ' ' + base64.b64encode(column)
+
+    def row_column_decode(self, row_column_code):
+        return map(base64.b64decode, row_column_code.split(' ', 1))
+
     def read_data(self, data_key):
         """Get data from disk corresponding to data_key
 
@@ -75,18 +82,19 @@ class AMTManager(object):
         path = self.key_to_path_db.get(data_key)
         if path is None:
             raise KeyError
+        row, column = self.row_column_decode(path)
         try:
-            return self.cache[path]
+            return self.cache[row][column]
         except KeyError:
-            return open(path).read()
+            return self.data_source.value(row, column)
 
-    def _cache_path(self, path):
+    def _cache_row(self, row):
         st = time.time()
-        self.cache[path] = open(path).read()
-        print('Loaded[%s][%f]' % (path, time.time() - st))
+        self.cache[row] = dict(self.data_source.column_values())
+        print('Loaded[%s][%f]' % (row, time.time() - st))
 
-    def cache_path(self, path, delay=.25):
-        gevent.spawn_later(delay, self._cache_path, path)
+    def cache_row(self, row, delay=.25):
+        gevent.spawn_later(delay, self._cache_row, row)
 
     def admin_users(self, secret):
         """Return contents of users_db"""

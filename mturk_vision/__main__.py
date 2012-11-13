@@ -5,8 +5,8 @@ import mturk_vision
 def main():
     # Parse command line
     parser = argparse.ArgumentParser(description="Serve ")
+    parser.add_argument('data', help='Data URI')
     parser.add_argument('--setup', help='Run to setup file mappings', action='store_true')
-    parser.add_argument('--data', help='Path to the data directory', default=None)
     parser.add_argument('--port', help='Run on this port',
                         default='8080')
     parser.add_argument('--redis_address', help='Redis server address',

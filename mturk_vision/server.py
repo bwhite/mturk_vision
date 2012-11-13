@@ -6,6 +6,7 @@ import os
 import mturk_vision
 import redis
 from . import __path__
+from data_sources import data_source_from_uri
 ROOT = os.path.abspath(__path__[0])
 MANAGER = None
 
@@ -98,6 +99,7 @@ def server(**args):
                      for x, y in db_nums))
     print(args)
     sp = lambda x: ROOT + '/static_private/' + x
+    args['data_source'] = data_source_from_uri(args['data'])
     if args['type'] == 'video_label':
         MANAGER = mturk_vision.AMTVideoClassificationManager(index_path=sp('video_label.html'),
                                                              config_path=sp('video_label_config.js'),
@@ -125,7 +127,5 @@ def server(**args):
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['setup']:
-        if args['data'] is not None:
-            args['data'] = os.path.expanduser(args['data'])
-        MANAGER.initial_setup(args['data'])
+        MANAGER.initial_setup()
     bottle.run(host='0.0.0.0', port=args['port'], server='gevent')
