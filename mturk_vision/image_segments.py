@@ -12,6 +12,16 @@ class AMTImageSegmentsManager(mturk_vision.AMTImageClassificationManager):
         self.image_segments_config = json.load(open(__path__[0] + '/static_private/image_segments_config.js'))
         self.classes = self.image_segments_config['classes']
         self.num_random = 100
+        self.ilps = self.collect_ilps()  # [row] = ilp
+
+    def collect_ilps(self):
+        ilps = {}
+        for row, columns in self.data_source.row_column_values(columns=['ilp']):
+            print('Getting ILP[%s]' % row)
+            columns = dict(columns)
+            ilps[row] = json.loads(columns['ilp'])
+            print(ilps[row])
+        return ilps
 
     def make_data(self, user_id):
         try:
@@ -25,7 +35,15 @@ class AMTImageSegmentsManager(mturk_vision.AMTImageClassificationManager):
         else:
             user_class = random.choice(self.classes)
             self.users_db.hset(user_id, 'user_class', json.dumps(user_class))
-        image = self.random_images()[0]
+        # Half of the time do a true random sample
+        if random.random() < .5 or not self.ilps:
+            image = self.random_images()[0]
+        else:
+            images = self.random_images(self.num_random)
+            image_ilps = [(self.ilps[x][user_class['num']], x) for x in images if x in self.ilps]
+            print(image_ilps)
+            image = max(image_ilps,
+                        key=lambda x: x[0])[1]
         image_out = 'image/' + self.path_to_key_db.get(self.row_column_encode(image, 'image'))
         segments_out = 'data/' + self.path_to_key_db.get(self.row_column_encode(image, 'segments'))
         out = {"image": image_out,

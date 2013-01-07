@@ -11,7 +11,7 @@ class UserNotFinishedException(Exception):
 
 
 class AMTManager(object):
-    
+
     def __init__(self, mode, num_tasks, index_path, config_path, users_db,
                  key_to_path_db, path_to_key_db, data_source, **kw):
         self.mode = mode
@@ -83,6 +83,9 @@ class AMTManager(object):
         if path is None:
             raise KeyError
         row, column = self.row_column_decode(path)
+        return self.read_row_column(row, column)
+
+    def read_row_column(self, row, column):
         try:
             return self.cache[row][column]
         except KeyError:
