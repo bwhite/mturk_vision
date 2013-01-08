@@ -127,5 +127,7 @@ def server(**args):
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['setup']:
+        if args['reset']:
+            MANAGER.reset()
         MANAGER.initial_setup()
     bottle.run(host='0.0.0.0', port=args['port'], server='gevent')

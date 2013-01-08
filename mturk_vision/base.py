@@ -36,6 +36,10 @@ class AMTManager(object):
         # Reload each time to simplify development
         return open(self.config_path).read()
 
+    def reset(self):
+        for db in self.dbs:
+            db.flushdb()
+
     def _make_secret(self):
         """Make secret used for admin functions"""
         self.secret = self.urlsafe_uuid()
