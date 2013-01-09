@@ -13,7 +13,7 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         self.images_to_answer = set()  # Represents which images need to been answered, once there are none left we reset
         self.num_cached = 1000
         self.dbs += [self.image_db, self.response_db]
-        self.random_images()  # Warm cache
+        self.initialize_images_to_answer()
 
     def _parse_fns(self, fn_path):
         return [fn.rstrip() for fn in open(fn_path)]
@@ -37,11 +37,17 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         key_to_path_db.execute()
         image_db.execute()
         self.cache = {}
-        self.random_images()  # Warm cache
+        self.initialize_images_to_answer()
+
+    def initialize_images_to_answer(self):
+        self.images_to_answer = set(self.image_db.keys('*'))
 
     def random_images(self, num_images=1):
         if not self.images_to_answer:
-            self.images_to_answer = set(self.image_db.keys('*'))
+            # Single mode only lets each image get annotated once
+            if self.mode == 'single':
+                return []
+            self.initialize_images_to_answer()
         available_images = list(self.images_to_answer)
         return random.sample(available_images, min(len(available_images), num_images))
 
@@ -50,7 +56,10 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
             return self._user_finished(user_id)
         except mturk_vision.UserNotFinishedException:
             pass
-        image = self.random_images()[0]
+        images = self.random_images()
+        if not images:
+            return {'submit_url': 'data:,Done%20annotating'}
+        image = images[0]
         out = {"images": [],
                "data_id": self.urlsafe_uuid()}
         self.response_db.hmset(out['data_id'], {'image': image,

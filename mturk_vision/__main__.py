@@ -16,8 +16,8 @@ def main():
                         default=6379, type=int)
     parser.add_argument('--num_tasks', help='Number of tasks per worker (unused in standalone mode)',
                         default=100, type=int)
-    parser.add_argument('--mode', help='Number of tasks per worker',
-                        default='standalone', choices=['amt', 'standalone'])
+    parser.add_argument('--mode', help='Mode to run server in',
+                        default='standalone', choices=['amt', 'standalone', 'single'])
     parser.add_argument('--type', help='Which AMT job type to run',
                         default='image_label', choices=['image_label', 'image_entity', 'image_segments',
                                                         'video_label', 'video_match', 'video_description'])

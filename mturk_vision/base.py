@@ -124,7 +124,7 @@ class AMTManager(object):
             UserNotFinishedException: User hasn't finished their tasks
         """
         cur_user = self.users_db.hgetall(user_id)
-        if (self.mode != 'standalone' and int(cur_user['tasks_finished']) >= self.num_tasks) or force:
+        if (self.mode == 'amt' and int(cur_user['tasks_finished']) >= self.num_tasks) or force:
             end_time = time.time()
             self.users_db.hset(user_id, 'end_time', end_time)
             pct_correct = int(cur_user['tasks_correct']) / float(cur_user['tasks_finished'])
