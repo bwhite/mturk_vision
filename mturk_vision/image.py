@@ -6,14 +6,14 @@ import time
 
 class AMTImageClassificationManager(mturk_vision.AMTManager):
 
-    def __init__(self, image_db, response_db, *args, **kw):
+    def __init__(self, image_db, response_db, required_columns=(), *args, **kw):
         super(AMTImageClassificationManager, self).__init__(*args, **kw)
         self.image_db = image_db  # [image_path] = ''
         self.response_db = response_db
         self.images_to_answer = set()  # Represents which images need to been answered, once there are none left we reset
-        self.num_cached = 1000
         self.dbs += [self.image_db, self.response_db]
         self.initialize_images_to_answer()
+        self.required_columns = set(required_columns)
 
     def _parse_fns(self, fn_path):
         return [fn.rstrip() for fn in open(fn_path)]
@@ -27,6 +27,10 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         key_to_path_db = self.key_to_path_db.pipeline()
         image_db = self.image_db.pipeline()
         for row, columns in self.data_source.row_columns():
+            columns = set(columns)
+            print(columns)
+            if not self.required_columns.issubset(columns):
+                continue
             image_db.set(row, '')
             for column in columns:
                 row_column_code = self.row_column_encode(row, column)
@@ -46,6 +50,7 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         if not self.images_to_answer:
             # Single mode only lets each image get annotated once
             if self.mode == 'single':
+                self.stop_server()
                 return []
             self.initialize_images_to_answer()
         available_images = list(self.images_to_answer)

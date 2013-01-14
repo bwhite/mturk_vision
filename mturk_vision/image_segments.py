@@ -8,19 +8,22 @@ from . import __path__
 class AMTImageSegmentsManager(mturk_vision.AMTImageClassificationManager):
 
     def __init__(self, *args, **kw):
-        super(AMTImageSegmentsManager, self).__init__(*args, **kw)
+        super(AMTImageSegmentsManager, self).__init__(required_columns=['image', 'segments'], *args, **kw)
         self.image_segments_config = json.load(open(__path__[0] + '/static_private/image_segments_config.js'))
         self.classes = self.image_segments_config['classes']
-        self.num_random = 100
+        self.num_random_ilp = 100
         self.ilps = self.collect_ilps()  # [row] = ilp
 
     def collect_ilps(self):
         ilps = {}
-        for row, columns in self.data_source.row_column_values(columns=['ilp']):
-            print('Getting ILP[%s]' % row)
-            columns = dict(columns)
-            ilps[row] = json.loads(columns['ilp'])
-            print(ilps[row])
+        try:
+            for row, columns in self.data_source.row_column_values(columns=['ilp']):
+                print('Getting ILP[%s]' % row)
+                columns = dict(columns)
+                ilps[row] = json.loads(columns['ilp'])
+                print(ilps[row])
+        except KeyError:
+            pass
         return ilps
 
     def make_data(self, user_id):
@@ -39,7 +42,7 @@ class AMTImageSegmentsManager(mturk_vision.AMTImageClassificationManager):
         if random.random() < .5 or not self.ilps:
             image = self.random_images()[0]
         else:
-            images = self.random_images(self.num_random)
+            images = self.random_images(self.num_random_ilp)
             image_ilps = [(self.ilps[x][user_class['num']], x) for x in images if x in self.ilps]
             print(image_ilps)
             image = max(image_ilps,
@@ -50,6 +53,5 @@ class AMTImageSegmentsManager(mturk_vision.AMTImageClassificationManager):
                "segments": segments_out,
                "data_id": self.urlsafe_uuid(),
                "user_class": user_class}
-        self.response_db.hmset(out['data_id'], {'image': image,
-                                                'user_id': user_id, 'start_time': time.time()})
+        self.response_db.hmset(out['data_id'], {'image': image, 'user_id': user_id, 'start_time': time.time()})
         return out

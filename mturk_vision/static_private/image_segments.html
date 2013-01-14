@@ -70,12 +70,13 @@ function onMouseDrag(event) {
     onMouseDown(event);
 }
 
-
-function render_hulls(hulls) {
+function clear_state() {
     paper.selected_objects = {}
     project.activeLayer.removeChildren();
-    //project.activeLayer.remove();
-    //var layer = new Layer();
+}
+
+function render_hulls(hulls) {
+    clear_state();
     view.draw();
     var raster = new Raster('image');
     raster.position = new Point(raster.width / 2, raster.height / 2);
@@ -135,6 +136,9 @@ paper.render_hulls = render_hulls;
 
       function update_data(data) {
         debug_data = data;
+        if (data.submit_url) { <!-- If we are given a submit url, redirect to it and we are done. -->
+            window.location.href = data.submit_url;
+        }
         annotation_class = data.user_class;
         $('#class_name').html(annotation_class.name);
         $('#class_description').html(annotation_class.description);
@@ -173,6 +177,7 @@ paper.render_hulls = render_hulls;
 
       function submit_handler(event) {
           var segments = $.map(Object.keys(paper.selected_objects), function(x) {return parseInt(x)});
+          clear_state();
           ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, data: {name: annotation_class.name, segments: segments}}), update_data);
       }
 

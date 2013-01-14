@@ -1,20 +1,4 @@
-import boto
-import boto.mturk.qualification
-import os
+import mturk_vision
 
-kw = {}
-#kw = {'host': 'mechanicalturk.sandbox.amazonaws.com'}  # Uncomment for sandbox
-mtc = boto.connect_mturk(os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'], **kw)
-
-question = boto.mturk.question.ExternalQuestion('http://api.dappervision.com:8000', 2000)
-qualifications = boto.mturk.qualification.Qualifications()
-#qualifications.add(boto.mturk.qualification.PercentAssignmentsApprovedRequirement('GreaterThan', 80, True))
-#qualifications.add(boto.mturk.qualification.NumberHitsApprovedRequirement('GreaterThan', 100, True))
-out = mtc.create_hit(question=question,
-                     max_assignments=10,
-                     qualifications=qualifications,
-                     title='Write a short description for 5 videos',
-                     description='Write a short description for 5 videos',
-                     keywords='video annotation write quick fun'.split(),
-                     duration=int(60 * 5),
-                     reward=0.5)
+description = 'You are given a single category, you are to only select segments that belong to this category.  Segments are selected/deselected by clicking on the image with your mouse, when you are done press enter or click the submit button. Segments you select should be mostly (>75%) the category you are given.  Only select segments that you are confident about.  Not all images will have the category you are given, just press submit.'
+mturk_vision.create_hit('Label image segments for 25 images', description, duration=25 * 60, reward=.15, max_assignments=10, keywords=['image', 'segments'], url='http://api0.picar.us:16000/')

@@ -5,6 +5,7 @@ import base
 import os
 import mturk_vision
 import redis
+import gevent.pywsgi
 from . import __path__
 from data_sources import data_source_from_uri
 ROOT = os.path.abspath(__path__[0])
@@ -99,6 +100,8 @@ def server(**args):
                      for x, y in db_nums))
     print(args)
     sp = lambda x: ROOT + '/static_private/' + x
+    SERVER = gevent.pywsgi.WSGIServer(('0.0.0.0', int(args['port'])), bottle.app())
+    args['server'] = SERVER
     args['data_source'] = data_source_from_uri(args['data'])
     if args['type'] == 'video_label':
         MANAGER = mturk_vision.AMTVideoClassificationManager(index_path=sp('video_label.html'),
@@ -130,4 +133,4 @@ def server(**args):
         if args['reset']:
             MANAGER.reset()
         MANAGER.initial_setup()
-    bottle.run(host='0.0.0.0', port=args['port'], server='gevent')
+    SERVER.serve_forever()

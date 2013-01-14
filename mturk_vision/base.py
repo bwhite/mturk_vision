@@ -13,7 +13,7 @@ class UserNotFinishedException(Exception):
 class AMTManager(object):
 
     def __init__(self, mode, num_tasks, index_path, config_path, users_db,
-                 key_to_path_db, path_to_key_db, data_source, **kw):
+                 key_to_path_db, path_to_key_db, data_source, server, **kw):
         self.mode = mode
         self.num_tasks = num_tasks
         self.users_db = users_db
@@ -22,9 +22,11 @@ class AMTManager(object):
         self.dbs = [self.key_to_path_db, self.path_to_key_db, self.users_db]
         self.index_path = index_path
         self.config_path = config_path
+        self.server = server
         self.cache = {}
         self.data_source = data_source
         self._make_secret()
+        self.data_source_lock = gevent.coros.RLock()
 
     @property
     def index(self):
@@ -47,6 +49,9 @@ class AMTManager(object):
         print('Results URL:  /%s/results.js' % self.secret)
         print('Users URL:  /%s/users.js' % self.secret)
         print('Quit URL:  /%s/quit' % self.secret)
+
+    def stop_server(self):
+        self.server.stop()
 
     def make_data(self, user_id):
         pass
@@ -93,11 +98,19 @@ class AMTManager(object):
         try:
             return self.cache[row][column]
         except KeyError:
-            return self.data_source.value(row, column)
+            try:
+                self.data_source_lock.acquire()
+                return self.data_source.value(row, column)
+            finally:
+                self.data_source_lock.release()
 
     def _cache_row(self, row):
         st = time.time()
-        self.cache[row] = dict(self.data_source.column_values())
+        try:
+            self.data_source_lock.acquire()
+            self.cache[row] = dict(self.data_source.column_values())
+        finally:
+            self.data_source_lock.release()
         print('Loaded[%s][%f]' % (row, time.time() - st))
 
     def cache_row(self, row, delay=.25):
