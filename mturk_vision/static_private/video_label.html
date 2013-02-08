@@ -86,6 +86,10 @@
         if (data.entity_name) {
             $('#entity_name').html(data.entity_name);
         }
+        $('#query').html('');
+        if (data.query) {
+            $('#query').html(data.query);
+        }
         $('#images').html('');
         $.each(data.images, function(index, value) {   
             $('#images').append($('<img>', {src: value.src,
@@ -168,6 +172,7 @@
             <div id="instructions">
             </div>
             <div id="entity_name"></div>
+            <div id="query"></div>
             <h2 id="image_name"></h2>
             <div id="images"></div>
             <h2 id="classes_name"></h2>

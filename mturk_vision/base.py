@@ -13,7 +13,7 @@ class UserNotFinishedException(Exception):
 class AMTManager(object):
 
     def __init__(self, mode, num_tasks, index_path, config_path, users_db,
-                 key_to_path_db, path_to_key_db, data_source, server, **kw):
+                 key_to_path_db, path_to_key_db, data_source, server, secret=None, **kw):
         self.mode = mode
         self.num_tasks = num_tasks
         self.users_db = users_db
@@ -25,7 +25,7 @@ class AMTManager(object):
         self.server = server
         self.cache = {}
         self.data_source = data_source
-        self._make_secret()
+        self._make_secret(secret)
         self.data_source_lock = gevent.coros.RLock()
 
     @property
@@ -42,13 +42,15 @@ class AMTManager(object):
         for db in self.dbs:
             db.flushdb()
 
-    def _make_secret(self):
+    def _make_secret(self, secret=None):
         """Make secret used for admin functions"""
-        self.secret = self.urlsafe_uuid()
-        open('SECRET', 'w').write(self.secret)
-        print('Results URL:  /%s/results.js' % self.secret)
-        print('Users URL:  /%s/users.js' % self.secret)
-        print('Quit URL:  /%s/quit' % self.secret)
+        if secret is None:
+            self.secret = self.urlsafe_uuid()
+        else:
+            self.secret = secret
+        print('Results URL:  /admin/%s/results.js' % self.secret)
+        print('Users URL:  /admin/%s/users.js' % self.secret)
+        print('Quit URL:  /admin/%s/stop' % self.secret)
 
     def stop_server(self):
         self.server.stop()
@@ -119,8 +121,7 @@ class AMTManager(object):
     def admin_users(self, secret):
         """Return contents of users_db"""
         if secret == self.secret:
-            keys = self.users_db.keys()
-            return json.dumps(dict((k, self.users_db.hgetall(k)) for k in keys))
+            return json.dumps({k: self.users_db.hgetall(k) for k in self.users_db.keys('*')})
 
     def _user_finished(self, user_id, force=False):
         """Check if the user has finished their tasks, if so output the return dictionary.

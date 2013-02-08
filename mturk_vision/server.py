@@ -10,6 +10,7 @@ from . import __path__
 from data_sources import data_source_from_uri
 ROOT = os.path.abspath(__path__[0])
 MANAGER = None
+print('ROOT[%s]' % ROOT)
 
 
 @bottle.get('/')
@@ -17,8 +18,9 @@ def index():
     return MANAGER.index
 
 
-@bottle.get('/static/<file_name:re:[a-zA-z_\-\.0-9]+\.(js|png|jpeg|jpg|html|css)>')
+@bottle.get('/static/:file_name')
 def static(file_name):
+    print('Static ROOT[%s]' % ROOT)
     return bottle.static_file(file_name, ROOT + '/static')
 
 
@@ -57,20 +59,20 @@ def metadata(data_key):
     return cur_data
 
 
-@bottle.get('/:secret/results.js')
+@bottle.get('/admin/:secret/results.js')
 def admin_results(secret):
     return MANAGER.admin_results(secret)
 
 
-@bottle.get('/:secret/users.js')
+@bottle.get('/admin/:secret/users.js')
 def admin_users(secret):
     return MANAGER.admin_users(secret)
 
 
-@bottle.get('/:secret/quit')
-def admin_quit(secret):
+@bottle.get('/admin/:secret/stop')
+def admin_stop(secret):
     print('Quitting')
-    quit()
+    MANAGER.stop_server()
 
 
 @bottle.put('/result/')
@@ -93,7 +95,7 @@ def make_data(user_id):
 
 def server(**args):
     global MANAGER
-    
+
     db_nums = list(enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response']))
     print(db_nums)
     args.update(dict((y + '_db', redis.StrictRedis(host=args['redis_address'], port=args['redis_port'], db=x))
@@ -127,10 +129,15 @@ def server(**args):
         MANAGER = mturk_vision.AMTImageSegmentsManager(index_path=sp('image_segments.html'),
                                                        config_path=sp('image_segments_config.js'),
                                                        **args)
+    elif args['type'] == 'image_query':
+        MANAGER = mturk_vision.AMTImageQueryManager(index_path=sp('video_label.html'),
+                                                    config_path=sp('image_query_config.js'),
+                                                    **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['setup']:
         if args['reset']:
             MANAGER.reset()
         MANAGER.initial_setup()
+    print(bottle.app[0].routes)
     SERVER.serve_forever()

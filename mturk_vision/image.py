@@ -2,6 +2,7 @@ import mturk_vision
 import random
 import json
 import time
+import base64
 
 
 class AMTImageClassificationManager(mturk_vision.AMTManager):
@@ -26,11 +27,12 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         path_to_key_db = self.path_to_key_db.pipeline()
         key_to_path_db = self.key_to_path_db.pipeline()
         image_db = self.image_db.pipeline()
+        num_images = 0
         for row, columns in self.data_source.row_columns():
             columns = set(columns)
-            print(columns)
             if not self.required_columns.issubset(columns):
                 continue
+            num_images += 1
             image_db.set(row, '')
             for column in columns:
                 row_column_code = self.row_column_encode(row, column)
@@ -41,6 +43,7 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         key_to_path_db.execute()
         image_db.execute()
         self.cache = {}
+        print('Num Images[%d]' % num_images)
         self.initialize_images_to_answer()
 
     def initialize_images_to_answer(self):
@@ -75,8 +78,16 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
     def admin_results(self, secret):
         """Return contents of response_db"""
         if secret == self.secret:
-            keys = self.response_db.keys('*')
-            return json.dumps(dict(zip(keys, self.response_db.mget(keys))))
+            out = {}
+            for k in self.response_db.keys('*'):
+                response = self.response_db.hgetall(k)
+                # URLsafe base64 image as it may be binary
+                try:
+                    response['image'] = base64.urlsafe_b64encode(response['image'])
+                except KeyError:
+                    pass
+                out[k] = response
+            return json.dumps(out)
 
     def result(self, user_id, data_id, data):
         assert self.response_db.hget(data_id, 'user_id') == user_id

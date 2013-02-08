@@ -93,7 +93,7 @@ function render_hulls(hulls) {
     });
     view.draw();
 }
-
+paper.clear_state = clear_state;
 paper.render_hulls = render_hulls;
 </script>
 
@@ -177,7 +177,7 @@ paper.render_hulls = render_hulls;
 
       function submit_handler(event) {
           var segments = $.map(Object.keys(paper.selected_objects), function(x) {return parseInt(x)});
-          clear_state();
+          paper.clear_state();
           ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, data: {name: annotation_class.name, segments: segments}}), update_data);
       }
 
