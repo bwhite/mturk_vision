@@ -83,7 +83,7 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
                 except KeyError:
                     pass
                 out[k] = response
-            return json.dumps(out)
+            return out
 
     def result(self, user_id, data_id, data):
         assert self.response_db.hget(data_id, 'user_id') == user_id

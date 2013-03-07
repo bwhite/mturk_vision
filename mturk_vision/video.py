@@ -83,7 +83,7 @@ class AMTVideoClassificationManager(mturk_vision.AMTManager):
         """Return contents of response_db"""
         if secret == self.secret:
             keys = self.response_db.keys()
-            return json.dumps(dict((k, self.response_db.hgetall(k)) for k in keys))
+            return {k: self.response_db.hgetall(k) for k in keys}
 
     def result(self, user_id, data_id, data):
         #assert request['user_id'] in USERS_DB
