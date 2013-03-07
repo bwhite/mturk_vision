@@ -108,7 +108,7 @@
       }
 
       function submit_handler(event) {
-          ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, video_index: parseInt(selected_radio())}), update_data);
+          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, video_index: parseInt(selected_radio())}), update_data);
       }
 
       function reload_handler(event) {

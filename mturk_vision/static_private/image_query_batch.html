@@ -24,6 +24,18 @@
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
     <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+
+    <style>
+      .data_image_div {
+        float: left;
+        border-style: solid;
+        border-color: white;
+        border-size: 10px;
+      }
+      .clicked_data_image_div {
+          border-color: red;
+      }
+    </style>
   </head>
 
   <body>
@@ -91,10 +103,13 @@
             $('#query').html(data.query);
         }
         $('#images').html('');
+        function click_image() {
+          $(this).toggleClass('clicked_data_image_div');
+        }
         $.each(data.images, function(index, value) {   
-            $('#images').append($('<img>', {src: value.src,
-                                            width: value.width,
-                                            height: value.height}));
+            $('#images').append($('<div>', {class: 'data_image_div', name: String(index),}).append($('<img>', {src: value.src,
+                  width: value.width,
+                  height: value.height})).click(click_image));
         });
       }
 
@@ -116,7 +131,9 @@
       }
 
       function submit_handler(event) {
-          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $(this).attr('name')}), update_data);
+          var not_selected = $(':not(.clicked_data_image_div).data_image_div').map(function () {return $(this).attr('name')}).get();
+          var selected = $('.clicked_data_image_div').map(function () {return $(this).attr('name')}).get();
+          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: {polarity: $(this).attr('name'), selected: selected, notSelected: not_selected}}), update_data);
       }
 
       function reload_handler(event) {
@@ -161,7 +178,7 @@
         });
     </script>
 
-    <div class="container">
+    <div class="container" style="width:90%">
       <div class="content">
         <div class="page-header">
           <h1 id="title"></h1>
@@ -175,6 +192,7 @@
             <div id="query"></div>
             <h2 id="image_name"></h2>
             <div id="images"></div>
+            <div class="clearfix"></div>
             <h2 id="classes_name"></h2>
             <div id="classes" style="padding-left: 10px"></div>
             <div>

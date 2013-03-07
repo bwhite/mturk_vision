@@ -112,7 +112,7 @@
       }
 
       function submit_handler(event) {
-          ajax("/result/", "put", JSON.stringify({user_id: user_id, data_id: data_id, description: $('#description_text').val()}), update_data);
+          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, description: $('#description_text').val()}), update_data);
           $('#description_text').val('');
           update_character_count()
       }

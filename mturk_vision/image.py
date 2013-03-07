@@ -51,10 +51,6 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
 
     def random_images(self, num_images=1):
         if not self.images_to_answer:
-            # Single mode only lets each image get annotated once
-            if self.mode == 'single':
-                self.stop_server()
-                return []
             self.initialize_images_to_answer()
         available_images = list(self.images_to_answer)
         return random.sample(available_images, min(len(available_images), num_images))
