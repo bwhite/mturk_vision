@@ -33,7 +33,8 @@ class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
         # Don't double count old submissions
         if self.response_db.hget(data_id, 'user_data') is None:
             self.response_db.hset(data_id, 'user_data', json.dumps(data))
-            for image in map(base64.urlsafe_b64decode, json.loads(self.response_db.hget(data_id, 'images'))):
+            images = [base64.urlsafe_b64decode(str(x)) for x in json.loads(self.response_db.hget(data_id, 'images'))]
+            for image in images:
                 # Remove image to answer, and evict from cache
                 try:
                     self.images_to_answer.remove(image)
