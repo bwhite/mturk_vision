@@ -44,6 +44,6 @@ class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
                     del self.cache[image]
                 except KeyError:
                     pass
-                super(mturk_vision.AMTImageClassificationManager, self).result(user_id)
+            super(mturk_vision.AMTImageClassificationManager, self).result(user_id)
             self.response_db.hset(data_id, 'end_time', time.time())
         return self.make_data(user_id)
