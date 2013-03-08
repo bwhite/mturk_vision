@@ -131,9 +131,9 @@
       }
 
       function submit_handler(event) {
-          var not_selected = $(':not(.clicked_data_image_div).data_image_div').map(function () {return $(this).attr('name')}).get();
-          var selected = $('.clicked_data_image_div').map(function () {return $(this).attr('name')}).get();
-          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: {polarity: $(this).attr('name'), selected: selected, notSelected: not_selected}}), update_data);
+          var not_selected = $(':not(.clicked_data_image_div).data_image_div').map(function () {return Number($(this).attr('name'))}).get();
+          var selected = $('.clicked_data_image_div').map(function () {return Number($(this).attr('name'))}).get();
+          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: {polarity: $(this).attr('name') === 'true', selected: selected, notSelected: not_selected}}), update_data);
       }
 
       function reload_handler(event) {
