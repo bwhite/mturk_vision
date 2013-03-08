@@ -2,7 +2,6 @@ import mturk_vision
 import random
 import json
 import time
-import base64
 
 
 class AMTImageClassificationManager(mturk_vision.AMTManager):
@@ -76,20 +75,14 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         if secret == self.secret:
             out = {}
             for k in self.response_db.keys('*'):
-                response = self.response_db.hgetall(k)
-                # URLsafe base64 image as it may be binary
-                try:
-                    response['image'] = base64.urlsafe_b64encode(response['image'])
-                except KeyError:
-                    pass
-                out[k] = response
+                out[k] = self.response_db.hgetall(k)
             return out
 
     def result(self, user_id, data_id, data):
         assert self.response_db.hget(data_id, 'user_id') == user_id
         # Don't double count old submissions
         if self.response_db.hget(data_id, 'user_data') is None:
-            self.response_db.hset(data_id, 'user_data', data)
+            self.response_db.hset(data_id, 'user_data', json.dumps(data))
             image = self.response_db.hget(data_id, 'image')
             # Remove image to answer, and evict from cache
             try:
