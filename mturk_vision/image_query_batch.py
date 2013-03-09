@@ -37,7 +37,7 @@ class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
             for image in images:
                 # Remove image to answer, and evict from cache
                 try:
-                    self.images_to_answer.remove(image)
+                    self.state_db.srem('images_to_answer', image)
                 except KeyError:
                     pass
                 try:

@@ -13,12 +13,13 @@ class UserNotFinishedException(Exception):
 class AMTManager(object):
 
     def __init__(self, mode, num_tasks, index_path, config_path, users_db,
-                 key_to_path_db, path_to_key_db, data_source, secret=None, **kw):
+                 key_to_path_db, path_to_key_db, data_source, state_db, secret=None, **kw):
         self.mode = mode
         self.num_tasks = num_tasks
         self.users_db = users_db
         self.key_to_path_db = key_to_path_db
         self.path_to_key_db = path_to_key_db
+        self.state_db = state_db
         self.dbs = [self.key_to_path_db, self.path_to_key_db, self.users_db]
         self.index_path = index_path
         self.config_path = config_path

@@ -1,17 +1,18 @@
 import os
 import mturk_vision
 import redis
+import logging
 from . import __path__
 from data_sources import data_source_from_uri
 ROOT = os.path.abspath(__path__[0])
 
 
 def manager(**args):
-    db_nums = list(enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response']))
-    print(db_nums)
+    db_nums = list(enumerate(['users', 'key_to_path', 'path_to_key', 'frame', 'description', 'image', 'response', 'state']))
+    logging.debug(db_nums)
     args.update(dict((y + '_db', redis.StrictRedis(host=args['redis_address'], port=args['redis_port'], db=x))
                      for x, y in db_nums))
-    print(args)
+    logging.debug(args)
     sp = lambda x: ROOT + '/static_private/' + x
     args['data_source'] = data_source_from_uri(args['data'])
     if args['type'] == 'video_label':

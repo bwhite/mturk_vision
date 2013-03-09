@@ -6,11 +6,10 @@ import time
 
 class AMTImageClassificationManager(mturk_vision.AMTManager):
 
-    def __init__(self, image_db, response_db, required_columns=(), *args, **kw):
+    def __init__(self, image_db, response_db, required_columns=('image',), *args, **kw):
         super(AMTImageClassificationManager, self).__init__(*args, **kw)
         self.image_db = image_db  # [image_path] = ''
         self.response_db = response_db
-        self.images_to_answer = set()  # Represents which images need to been answered, once there are none left we reset
         self.dbs += [self.image_db, self.response_db]
         self.initialize_images_to_answer()
         self.required_columns = set(required_columns)
@@ -19,7 +18,6 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         return [fn.rstrip() for fn in open(fn_path)]
 
     def initial_setup(self):
-        self.images_to_answer = set()
         self.path_to_key_db.flushdb()
         self.key_to_path_db.flushdb()
         self.image_db.flushdb()
@@ -45,14 +43,17 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         print('Num Images[%d]' % num_images)
         self.initialize_images_to_answer()
 
-    def initialize_images_to_answer(self):
-        self.images_to_answer = set(self.image_db.keys('*'))
+    def initialize_images_to_answer(self, ignore_images=()):
+        ignore_images = set(ignore_images)
+        images = set(self.image_db.keys('*')).difference(ignore_images)
+        self.state_db.sadd('images_to_answer', *list(images))
 
     def random_images(self, num_images=1):
-        if not self.images_to_answer:
-            self.initialize_images_to_answer()
-        available_images = list(self.images_to_answer)
-        return random.sample(available_images, min(len(available_images), num_images))
+        out = self.state_db.srandmember('images_to_answer', num_images)
+        if len(out) < num_images:
+            self.initialize_images_to_answer(ignore_images=out)
+            out += self.state_db.srandmember('images_to_answer', num_images - len(out))
+        return out
 
     def make_data(self, user_id):
         try:
@@ -86,7 +87,7 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
             image = self.response_db.hget(data_id, 'image')
             # Remove image to answer, and evict from cache
             try:
-                self.images_to_answer.remove(image)
+                self.state_db.srem('images_to_answer', image)
             except KeyError:
                 pass
             try:
