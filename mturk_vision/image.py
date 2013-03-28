@@ -10,7 +10,7 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         super(AMTImageClassificationManager, self).__init__(*args, **kw)
         self.image_db = image_db  # [image_path] = ''
         self.response_db = response_db
-        self.dbs += [self.image_db, self.response_db]
+        self.dbs += [self.image_db, self.response_db, self.state_db]
         self.initialize_images_to_answer()
         self.required_columns = set(required_columns)
 
@@ -43,17 +43,21 @@ class AMTImageClassificationManager(mturk_vision.AMTManager):
         print('Num Images[%d]' % num_images)
         self.initialize_images_to_answer()
 
-    def initialize_images_to_answer(self, ignore_images=()):
-        ignore_images = set(ignore_images)
-        images = set(self.image_db.keys('*')).difference(ignore_images)
-        self.state_db.sadd('images_to_answer', *list(images))
+    def initialize_images_to_answer(self):
+        images = self.image_db.keys('*')
+        if len(images):
+            print('Adding more images[%d]' % len(images))
+            self.state_db.sadd('images_to_answer', *images)
+        else:
+            print('No images!')
 
     def random_images(self, num_images=1):
         out = self.state_db.srandmember('images_to_answer', num_images)
         if len(out) < num_images:
-            self.initialize_images_to_answer(ignore_images=out)
+            self.initialize_images_to_answer()
             out += self.state_db.srandmember('images_to_answer', num_images - len(out))
-        return out
+        print(out)
+        return list(set(out))
 
     def make_data(self, user_id):
         try:

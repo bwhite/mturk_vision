@@ -4,6 +4,7 @@ import json
 import time
 import gevent
 import random
+import cgi
 
 
 class UserNotFinishedException(Exception):
@@ -27,6 +28,8 @@ class AMTManager(object):
         self.data_source = data_source
         self._make_secret(secret)
         self.data_source_lock = gevent.coros.RLock()
+        if 'instructions' in kw:
+            self.instructions = '<pre>%s</pre>' % cgi.escape(kw['instructions'])
 
     @property
     def index(self):
@@ -36,7 +39,12 @@ class AMTManager(object):
     @property
     def config(self):
         # Reload each time to simplify development
-        return open(self.config_path).read()
+        config = open(self.config_path).read()
+        if hasattr(self, 'instructions'):
+            config_js = json.loads(config)
+            config_js['instructions'] = self.instructions
+            config = json.dumps(config_js)
+        return config
 
     def reset(self):
         for db in self.dbs:
