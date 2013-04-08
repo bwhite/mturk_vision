@@ -15,11 +15,11 @@ def create_hit(title, description, duration, reward, max_assignments, keywords, 
     qualifications.add(boto.mturk.qualification.PercentAssignmentsApprovedRequirement('GreaterThan', 80, True))
     qualifications.add(boto.mturk.qualification.NumberHitsApprovedRequirement('GreaterThan', 100, True))
     assert reward * max_assignments <= max_spend  # NOTE(brandyn): Simple safety mechanism to prevent one type of error
-    mtc.create_hit(question=question,
-                   max_assignments=max_assignments,
-                   qualifications=qualifications,
-                   title=title,
-                   description=description,
-                   keywords=keywords,
-                   duration=duration,
-                   reward=reward)
+    return mtc.create_hit(question=question,
+                          max_assignments=max_assignments,
+                          qualifications=qualifications,
+                          title=title,
+                          description=description,
+                          keywords=keywords,
+                          duration=duration,
+                          reward=reward)
