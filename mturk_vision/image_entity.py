@@ -20,7 +20,7 @@ class AMTImageEntityManager(mturk_vision.AMTImageClassificationManager):
         entity = self.read_row_column(image, 'entity')
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
-               "entity_name": entity}
+               "entity_name": '<h2>Entity Name: %s</h2>' % entity}
         self.response_db.hmset(out['data_id'], {'image': base64.urlsafe_b64encode(image),
                                                 'user_id': user_id, 'start_time': time.time(),
                                                 'entity': entity})
