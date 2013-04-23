@@ -1,5 +1,4 @@
 import mturk_vision
-import base64
 import time
 
 
@@ -21,7 +20,7 @@ class AMTImageEntityManager(mturk_vision.AMTImageClassificationManager):
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
                "entity_name": '<h2>Entity Name: %s</h2>' % entity}
-        self.response_db.hmset(out['data_id'], {'image': base64.urlsafe_b64encode(image),
+        self.response_db.hmset(out['data_id'], {'image': image,
                                                 'user_id': user_id, 'start_time': time.time(),
                                                 'entity': entity})
         out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.row_column_encode(image, 'image')), "width": 250})

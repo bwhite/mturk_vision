@@ -22,7 +22,7 @@ class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
                "query": self.query}
-        self.response_db.hmset(out['data_id'], {'images': json.dumps(map(base64.urlsafe_b64encode, images)),
+        self.response_db.hmset(out['data_id'], {'images': json.dumps(map(base64.b64encode, images)),
                                                 'user_id': user_id, 'start_time': time.time()})
         for image in images:
             out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.row_column_encode(image, 'image')), "width": 150})
@@ -33,7 +33,7 @@ class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
         # Don't double count old submissions
         if self.response_db.hget(data_id, 'user_data') is None:
             self.response_db.hset(data_id, 'user_data', json.dumps(data))
-            images = [base64.urlsafe_b64decode(str(x)) for x in json.loads(self.response_db.hget(data_id, 'images'))]
+            images = [base64.b64decode(str(x)) for x in json.loads(self.response_db.hget(data_id, 'images'))]
             for image in images:
                 # Remove image to answer, and evict from cache
                 try:
