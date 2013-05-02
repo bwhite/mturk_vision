@@ -1,0 +1,1 @@
+java -jar compiler.jar *.js --js_output_file ../static/compressed.js
