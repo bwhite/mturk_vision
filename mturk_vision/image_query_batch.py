@@ -2,7 +2,7 @@ import mturk_vision
 import json
 import time
 import base64
-from mturk_vision import _quote as quote
+from mturk_vision import quote
 
 
 class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):

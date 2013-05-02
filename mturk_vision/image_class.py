@@ -1,7 +1,7 @@
 import mturk_vision
 import time
 import json
-from mturk_vision import _quote as quote
+from mturk_vision import quote
 
 
 class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
