@@ -28,9 +28,9 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
                "entity_name": '<h2>Class: %s</h2>' % class_name}
         h = ''
         if class_name in self.class_descriptions:
-            h = self.class_descriptions[class_name]
+            h = '<pre>Description: '+ self.class_descriptions[class_name] + '</pre>'
         if class_name in self.class_thumbnails:
-            h += '<h2>Class Examples</h2>'
+            h += '<h3>Class Examples</h3>'
             for x in self.class_thumbnails[class_name]:
                 h += '<img src="%s" height="75px" width="75px">' % x
         if h:
