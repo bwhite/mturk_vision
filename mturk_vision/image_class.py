@@ -32,8 +32,9 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
         if class_name in self.class_thumbnails:
             h += '<h2>Class Examples</h2>'
             for x in self.class_thumbnails[class_name]:
-                h += '<img src="%s" height="75px" width="75px">'
-        out['help'] = h
+                h += '<img src="%s" height="75px" width="75px">' % x
+        if h:
+            out['help'] = h
         self.response_db.hmset(out['data_id'], {'image': image,
                                                 'user_id': user_id, 'start_time': time.time(),
                                                 'entity': class_name})
