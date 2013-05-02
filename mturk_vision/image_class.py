@@ -25,7 +25,7 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
         class_name = quote(self.read_row_column(image, 'entity'))
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
-               "entity_name": '<h2>Class: %s</h2>' % class_name}
+               "entity_name": '<h3>Class: %s</h3>' % class_name}
         h = ''
         if class_name in self.class_descriptions:
             h = '<pre>Description: '+ self.class_descriptions[class_name] + '</pre>'
