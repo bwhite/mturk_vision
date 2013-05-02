@@ -21,7 +21,7 @@ def main():
     parser.add_argument('--mode', help='Mode to run server in',
                         default='standalone', choices=['amt', 'standalone', 'single'])
     parser.add_argument('--type', help='Which AMT job type to run',
-                        default='image_label', choices=['image_label', 'image_entity', 'image_query_batch', 'image_segments',
+                        default='image_label', choices=['image_label', 'image_class', 'image_entity', 'image_query_batch', 'image_segments',
                                                         'video_label', 'video_match', 'video_description',
                                                         'image_query'])
     parser.add_argument('--query', help='(only used by image_query)', type=str)

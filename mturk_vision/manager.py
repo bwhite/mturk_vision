@@ -35,6 +35,10 @@ def manager(**args):
         m = mturk_vision.AMTImageEntityManager(index_path=sp('video_label.html'),
                                                config_path=sp('image_entity_config.js'),
                                                **args)
+    elif args['type'] == 'image_class':
+        m = mturk_vision.AMTImageEntityManager(index_path=sp('video_label.html'),
+                                               config_path=sp('image_class_config.js'),
+                                               **args)
     elif args['type'] == 'image_segments':
         m = mturk_vision.AMTImageSegmentsManager(index_path=sp('image_segments.html'),
                                                  config_path=sp('image_segments_config.js'),
