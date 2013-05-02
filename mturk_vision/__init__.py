@@ -1,6 +1,6 @@
 def quote(x):
     import cgi
-    return cgi.quote(x, quote=True)
+    return cgi.escape(x, quote=True)
 
 from base import AMTManager, UserNotFinishedException
 from video import AMTVideoClassificationManager, AMTVideoTextMatchManager, AMTVideoDescriptionManager
