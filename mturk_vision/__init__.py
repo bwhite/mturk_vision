@@ -7,3 +7,8 @@ from image_query import AMTImageQueryManager
 from image_query_batch import AMTImageQueryBatchManager
 from tools import create_hit
 from manager import manager
+
+
+def _quote(x):
+    import cgi
+    return cgi.quote(x, quote=True)

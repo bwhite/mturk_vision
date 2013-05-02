@@ -2,6 +2,7 @@ import mturk_vision
 import json
 import time
 import base64
+from mturk_vision import _quote as quote
 
 
 class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
@@ -9,7 +10,7 @@ class AMTImageQueryBatchManager(mturk_vision.AMTImageClassificationManager):
     def __init__(self, query, *args, **kw):
         super(AMTImageQueryBatchManager, self).__init__(*args, **kw)
         self.images_per_batch = 64
-        self.query = '<h2>%s</h2>' % query
+        self.query = '<h2>%s</h2>' % quote(query)
 
     def make_data(self, user_id):
         try:

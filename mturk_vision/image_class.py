@@ -1,6 +1,7 @@
 import mturk_vision
 import time
 import json
+from mturk_vision import _quote as quote
 
 
 class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
@@ -8,7 +9,9 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
     def __init__(self, *args, **kw):
         super(AMTImageClassManager, self).__init__(*args, **kw)
         self.class_descriptions = json.loads(kw.get('class_descriptions', '{}'))
+        self.class_descriptions = {x: quote(y) for x, y in self.class_descriptions.items()}
         self.class_thumbnails = json.loads(kw.get('class_thumbnails', '{}'))
+        self.class_thumbnails = {x: map(quote, y) for x, y in self.class_thumbnails.items()}
 
     def make_data(self, user_id):
         try:
@@ -19,14 +22,18 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
         if not images:
             return {'submit_url': 'data:,Done%20annotating'}
         image = images[0]
-        class_name = self.read_row_column(image, 'entity')
+        class_name = quote(self.read_row_column(image, 'entity'))
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
                "entity_name": '<h2>Class: %s</h2>' % class_name}
+        h = ''
         if class_name in self.class_descriptions:
-            out['description'] = self.class_descriptions[class_name]
+            h = self.class_descriptions[class_name]
         if class_name in self.class_thumbnails:
-            out['class_thumbnails'] = self.class_thumbnails[class_name]
+            h += '<h2>Class Examples</h2>'
+            for x in self.class_thumbnails[class_name]:
+                h += '<img src="%s" height="75px" width="75px">'
+        out['help'] = h
         self.response_db.hmset(out['data_id'], {'image': image,
                                                 'user_id': user_id, 'start_time': time.time(),
                                                 'entity': class_name})
