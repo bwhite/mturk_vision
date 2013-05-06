@@ -4,7 +4,7 @@ import json
 from mturk_vision import quote
 
 
-class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
+class AMTImageClassManager(mturk_vision.AMTManager):
 
     def __init__(self, *args, **kw):
         super(AMTImageClassManager, self).__init__(*args, **kw)
@@ -18,11 +18,10 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
             return self._user_finished(user_id)
         except mturk_vision.UserNotFinishedException:
             pass
-        images = self.random_images()
-        if not images:
+        row = self.get_row(user_id)
+        if not row:
             return {'submit_url': 'data:,Done%20annotating'}
-        image = images[0]
-        class_name = quote(self.read_row_column(image, 'entity'))
+        class_name = quote(self.read_row_column(row, 'entity'))
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
                "entity_name": '<h3>Class: %s</h3>' % class_name}
@@ -35,8 +34,17 @@ class AMTImageClassManager(mturk_vision.AMTImageClassificationManager):
                 h += '<img src="%s" height="75px" width="75px">' % x
         if h:
             out['help'] = h
-        self.response_db.hmset(out['data_id'], {'image': image,
+        self.response_db.hmset(out['data_id'], {'image': row,
                                                 'user_id': user_id, 'start_time': time.time(),
                                                 'entity': class_name})
-        out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.row_column_encode(image, 'image')), "width": 250})
+        out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.row_column_encode(row, 'image')), "width": 250})
         return out
+
+    def result(self, user_id, data_id, data):
+        assert self.response_db.hget(data_id, 'user_id') == user_id
+        # Don't double count old submissions
+        if self.response_db.hget(data_id, 'user_data') is None:
+            self.response_db.hset(data_id, 'user_data', json.dumps(data))
+            super(AMTImageClassManager, self).result(user_id)
+            self.response_db.hset(data_id, 'end_time', time.time())
+        return self.make_data(user_id)
