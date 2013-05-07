@@ -67,7 +67,7 @@ class AMTManager(object):
 
     def _add_row(self, row, columns, state_db, key_to_path_db, path_to_key_db, priority=0):
         if not self.required_columns.issubset(columns):
-            continue
+            return
         state_db.zadd(self.prefix + 'rows_priority', priority, row)
         state_db.sadd(self.prefix + 'rows', row)
         for column in columns:
