@@ -4,6 +4,7 @@ import gevent.pywsgi
 import bottle
 import mturk_vision
 import os
+from . import __path__
 MANAGER = None
 SERVER = None
 ROOT = os.path.abspath(__path__[0])
