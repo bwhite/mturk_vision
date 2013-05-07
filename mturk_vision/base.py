@@ -97,7 +97,7 @@ class AMTManager(object):
             for row in rows:
                 if not self.state_db.sismember(self.prefix + 'seen:' + user, row):
                     self.state_db.sadd(self.prefix + 'seen:' + user, row)
-                    self.state_db.zincrby(self.prefix + 'rows', -1, row)
+                    self.state_db.zincrby(self.prefix + 'rows', row, -1)
                     return row
             if num >= self.num_tasks:
                 return
