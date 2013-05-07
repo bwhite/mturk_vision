@@ -35,17 +35,18 @@ class AMTImageClassManager(mturk_vision.AMTManager):
                 h += '<img src="%s" height="75px" width="75px">' % x
         if h:
             out['help'] = h
-        self.response_db.hmset(out['data_id'], {'image': row,
+        self.response_db.hmset(self.prefix + out['data_id'], {'image': row,
                                                 'user_id': user_id, 'start_time': time.time(),
                                                 'entity': class_name})
-        out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.row_column_encode(row, 'image')), "width": 250})
+        print('row[%r]' % row)
+        out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image')), "width": 250})
         return out
 
     def result(self, user_id, data_id, data):
-        assert self.response_db.hget(data_id, 'user_id') == user_id
+        assert self.response_db.hget(self.prefix + data_id, 'user_id') == user_id
         # Don't double count old submissions
-        if self.response_db.hget(data_id, 'user_data') is None:
-            self.response_db.hset(data_id, 'user_data', json.dumps(data))
+        if self.response_db.hget(self.prefix + data_id, 'user_data') is None:
+            self.response_db.hset(self.prefix + data_id, 'user_data', json.dumps(data))
             super(AMTImageClassManager, self).result(user_id)
-            self.response_db.hset(data_id, 'end_time', time.time())
+            self.response_db.hset(self.prefix + data_id, 'end_time', time.time())
         return self.make_data(user_id)
