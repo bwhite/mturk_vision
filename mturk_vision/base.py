@@ -129,7 +129,7 @@ class AMTManager(object):
         for row, columns in self.data_source.row_columns():
             if (time.time() - st) * 2 >= self.lock_expire:
                 self.data_lock_extend()
-            print(row)
+            print((repr(row), repr(columns)))
             self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
         self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
 
