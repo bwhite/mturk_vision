@@ -3,7 +3,6 @@ def quote(x):
     return cgi.escape(x, quote=True)
 
 from base import AMTManager, UserNotFinishedException
-from image import AMTImageClassificationManager
 from image_class import AMTImageClassManager
 from tools import create_hit
 from manager import manager
