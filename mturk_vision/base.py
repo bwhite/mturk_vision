@@ -92,17 +92,17 @@ class AMTManager(object):
 
     def get_row(self, user):
         # TODO: Do this in lua
-        count = 1
+        num = 1
         while 1:
-            rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), count=count)
+            rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), num=num)
             for row in rows:
                 if not self.state_db.sismember(self.prefix + 'seen:' + user, row):
                     self.state_db.sadd(self.prefix + 'seen:' + user, row)
                     self.state_db.zincrby(self.prefix + 'rows', -1, row)
                     return row
-            if count >= self.num_tasks:
+            if num >= self.num_tasks:
                 return
-            count = min(count * 2, self.num_tasks)
+            num = min(num * 2, self.num_tasks)
 
     def data_locked(self, data_lock):
         return self.state_db.get(self.prefix + 'data_lock') == data_lock
