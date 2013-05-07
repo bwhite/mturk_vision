@@ -16,7 +16,7 @@ def manager(**args):
     sp = lambda x: ROOT + '/static_private/' + x
     args['data_source'] = data_source_from_uri(args['data'])
     if args['type'] == 'image_class':
-        m = mturk_vision.AMTImageClassManager(index_path=sp('video_label.html'),
+        m = mturk_vision.AMTImageClassManager(index_path=sp('image_label.html'),
                                               config_path=sp('image_class_config.js'),
                                               **args)
     else:
