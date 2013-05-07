@@ -127,6 +127,7 @@ class AMTManager(object):
         self._flush_db(self.path_to_key_db)
         st = time.time()
         for row, columns in self.data_source.row_columns():
+            columns = set(columns)
             if (time.time() - st) * 2 >= self.lock_expire:
                 self.data_lock_extend()
             print((repr(row), repr(columns)))
