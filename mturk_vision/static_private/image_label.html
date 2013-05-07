@@ -75,13 +75,13 @@
 
       function update_data(data) {
         debug_data = data;
-        if (data.submit_url) { <!-- If we are given a submit url, redirect to it and we are done. -->
-            window.location.href = data.submit_url;
+        if (data.submitUrl) { <!-- If we are given a submit url, redirect to it and we are done. -->
+            window.location.href = data.submitUrl;
         }
-        data_id = data.data_id;
+        data_id = data.dataId;
         $('#class_name').html('');
-        if (data.class_name) {
-            $('#class_name').html(data.class_name);
+        if (data.className) {
+            $('#class_name').html(data.className);
         }
         $('#data_help').html('');
         if (data.help) {
@@ -100,7 +100,7 @@
       }
 
       function update_user(user) {
-          user_id = user.user_id;
+          user_id = user.userId;
           load_data();
       }
 

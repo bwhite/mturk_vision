@@ -151,14 +151,14 @@ class AMTManager(object):
     def user(self, bottle_request):
         """Make a new user entry"""
         user_id = self.urlsafe_uuid()
-        out = {'query_string': bottle_request.query_string,
-               'remote_addr': bottle_request.remote_addr,
-               'tasks_finished': 0,
-               'tasks_viewed': 0,
-               'start_time': time.time()}
+        out = {'queryString': bottle_request.query_string,
+               'remoteAddr': bottle_request.remote_addr,
+               'tasksFinished': 0,
+               'tasksViewed': 0,
+               'startTime': time.time()}
         out.update(dict(bottle_request.query))
         self.users_db.hmset(self.prefix + user_id, out)
-        return {"user_id": user_id}
+        return {"userId": user_id}
 
     def row_column_encode(self, row, column):
         return base64.b64encode(row) + ' ' + base64.b64encode(column)
@@ -208,21 +208,21 @@ class AMTManager(object):
             UserNotFinishedException: User hasn't finished their tasks
         """
         cur_user = self.users_db.hgetall(self.prefix + user_id)
-        if int(cur_user['tasks_finished']) >= self.num_tasks or force:
+        if int(cur_user['tasksFinished']) >= self.num_tasks or force:
             end_time = time.time()
-            self.users_db.hset(self.prefix + user_id, 'end_time', end_time)
+            self.users_db.hset(self.prefix + user_id, 'endTime', end_time)
             if self.mode == 'amt':
-                pct_finished = int(cur_user['tasks_finished']) / float(cur_user['tasks_viewed'])
+                pct_finished = int(cur_user['tasksFinished']) / float(cur_user['tasksViewed'])
                 query_string = '&'.join(['%s=%s' % x for x in [('assignmentId', cur_user.get('assignmentId', 'NoId')),
-                                                               ('pct_finished', pct_finished),
-                                                               ('tasks_finished', cur_user['tasks_finished']),
-                                                               ('tasks_viewed', cur_user['tasks_viewed']),
-                                                               ('time_taken', end_time - float(cur_user['start_time']))]])
-                return {'submit_url': '%s/mturk/externalSubmit?%s' % (cur_user.get('turkSubmitTo', 'http://www.mturk.com'), query_string)}
+                                                               ('pctFinished', pct_finished),
+                                                               ('tasksFinished', cur_user['tasksFinished']),
+                                                               ('tasksViewed', cur_user['tasksViewed']),
+                                                               ('timeTaken', end_time - float(cur_user['startTime']))]])
+                return {'submitUrl': '%s/mturk/externalSubmit?%s' % (cur_user.get('turkSubmitTo', 'http://www.mturk.com'), query_string)}
             else:
-                return {'submit_url': 'data:,Done%20annotating'}
-        self.users_db.hincrby(self.prefix + user_id, 'tasks_viewed')
+                return {'submitUrl': 'data:,Done%20annotating'}
+        self.users_db.hincrby(self.prefix + user_id, 'tasksViewed')
         raise UserNotFinishedException
 
     def result(self, user_id):
-        self.users_db.hincrby(self.prefix + user_id, 'tasks_finished')
+        self.users_db.hincrby(self.prefix + user_id, 'tasksFinished')

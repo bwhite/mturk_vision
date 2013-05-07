@@ -8,7 +8,7 @@ ROOT = os.path.abspath(__path__[0])
 
 
 def manager(**args):
-    db_nums = list(enumerate(['users', 'response', 'state', 'key_to_path', 'path_to_key']))
+    db_nums = list(enumerate(['users', 'response', 'state', 'key_to_path', 'path_to_key', 'tasks']))
     logging.debug(db_nums)
     args.update(dict((y + '_db', redis.StrictRedis(host=args['redis_address'], port=args['redis_port'], db=x))
                      for x, y in db_nums))
