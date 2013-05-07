@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Annotator</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.0/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/style.css" rel="stylesheet">
+    <script type="text/javascript" src="static/compressed.js"></script>
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+  </head>
+
+  <body>
+    <script type="text/javascript">
+
+      function query_string() {
+          var results = new RegExp('\\?.*').exec(window.location.href);
+          if (!results) { 
+              return "";
+          }
+          return results[0];
+      }
+
+      function update_config(config) {
+          debug_config = config;
+          document.title = config.title;
+          $('#title').html(config.title)
+          <!-- Update instructions -->
+          $('#instructions').html(config.instructions)
+          <!-- Update footer -->
+          $('#footer').html(config.footer)
+          <!-- Update image name -->
+          $('#image_name').html(config.image_name)
+          <!-- Update classes name -->
+          $('#classes_name').html(config.classes_name)
+          <!-- Update class description name -->
+          $('#class_description_name').html(config.class_description_name)
+          <!-- Set name of skip button or hide it -->
+          if (config.skip_button_name == "" || config.skip_button_name == undefined) {
+              $('#reload').hide();
+          } else {
+              $('#reload').attr('value', config.skip_button_name);
+          }
+          <!-- Update downdown -->
+          $('#classes').html('');
+          class_descriptions = {};
+          class_names = [];
+          var classes_obj = $('<ul>', {class: "inputs-list"});
+          $.each(config.classes, function(index, value) {   
+              var v0 = $('<input>', { id: 'submit_' + value.key, type: "submit", class: "btn secondary", name : value.key , value: value.name + ' (' + String.fromCharCode(97 + class_names.length) + ')'});
+              var v2 = $('<li>');
+              var v3 = $('<label>').append(v0);
+              classes_obj.append(v2.append(v3))
+              class_descriptions[value.key] = value.description;
+              class_names.push(value.key);
+          });
+        $('#classes').append(classes_obj);
+        $.each(config.classes, function(index, value) {
+            $('#submit_' + value.key).click(submit_handler);
+            $('#submit_' + value.key).mouseover(radio_change_handler);
+        });
+      }
+
+      function update_data(data) {
+        debug_data = data;
+        if (data.submit_url) { <!-- If we are given a submit url, redirect to it and we are done. -->
+            window.location.href = data.submit_url;
+        }
+        data_id = data.data_id;
+        $('#entity_name').html('');
+        if (data.entity_name) {
+            $('#entity_name').html(data.entity_name);
+        }
+        $('#data_help').html('');
+        if (data.help) {
+            $('#data_help').html(data.help);
+        }
+        $('#query').html('');
+        if (data.query) {
+            $('#query').html(data.query);
+        }
+        $('#images').html('');
+        $.each(data.images, function(index, value) {   
+            $('#images').append($('<img>', {src: value.src,
+                                            width: value.width,
+                                            height: value.height}));
+        });
+      }
+
+      function update_user(user) {
+          user_id = user.user_id;
+          load_data();
+      }
+
+      function load_config() {
+          $.getJSON("config.js", update_config);
+      }
+
+      function load_data() {
+          $.getJSON(user_id + "/data.js", update_data);
+      }
+
+      function load_user() {
+          $.getJSON("user.js" + query_string(), update_user);
+      }
+
+      function submit_handler(event) {
+          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $(this).attr('name')}), update_data);
+      }
+
+      function reload_handler(event) {
+          load_data();
+      }
+
+      function radio_change_handler() {
+          var cur_event = $(this).attr('name');
+          $('#class_description').html(class_descriptions[cur_event]);
+      }
+
+      function ajax(url, method, data, success, before_send, fail) {
+          if (typeof before_send == 'undefined' ) before_send = function() {};
+          if (typeof success == 'undefined' ) success = function() {};
+          if (typeof fail == 'undefined' ) fail = function() {};
+          var request = $.ajax({
+          type: method,
+          url: url,
+          dataType: "json",
+          contentType: "application/json; charset=utf-8",
+          beforeSend: before_send,
+          data: data,
+          success: success
+          });
+          request.fail(fail);
+      }
+
+      $(document).ready(function () {
+          load_config();
+          load_user();
+          $('#reload').click(reload_handler);
+          $(document).keypress(function(e) {
+              if(e.which == 13) {
+                  $('#submit').click()
+              } else if(e.which >= 97 && e.which <= 122) {
+                  var class_name = class_names[e.which - 97];
+                  if (class_name) {
+                      $('#submit_' + class_name).click();
+                  }
+              }
+            });
+        });
+    </script>
+
+    <div class="container">
+      <div class="content">
+        <div class="page-header">
+          <h1 id="title"></h1>
+        </div>
+        <div class="row">
+          <div class="span14">
+           <h3>Instructions</h3>
+            <div id="instructions">
+            </div>
+            <div id="entity_name"></div>
+            <div id="data_help"></div>
+            <div id="query"></div>
+            <h3 id="image_name"></h3>
+            <div id="images"></div>
+            <h3 id="classes_name"></h3>
+            <div id="classes" style="padding-left: 10px"></div>
+            <div>
+              <center>
+              <input id="reload" type="submit" class="btn secondary" value="">
+              </center>
+            </div>
+            <h3 id="class_description_name"></h3>
+            <div id="class_description"></div>
+          </div>
+        </div>
+      </div>
+
+      <footer id="footer">
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>
