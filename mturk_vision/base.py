@@ -94,7 +94,7 @@ class AMTManager(object):
         # TODO: Do this in lua
         num = 1
         while 1:
-            rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), num=num)
+            rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), num=num, start=0)
             for row in rows:
                 if not self.state_db.sismember(self.prefix + 'seen:' + user, row):
                     self.state_db.sadd(self.prefix + 'seen:' + user, row)
