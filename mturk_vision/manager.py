@@ -22,7 +22,5 @@ def manager(**args):
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['setup']:
-        if args['reset']:
-            m.reset()
-        m.initial_setup()
+        m.reset()
     return m
