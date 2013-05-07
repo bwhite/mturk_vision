@@ -12,7 +12,7 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         self.class_descriptions = {x: quote(y) for x, y in self.class_descriptions.items()}
         self.class_thumbnails = json.loads(kw.get('class_thumbnails', '{}'))
         self.class_thumbnails = {x: map(quote, y) for x, y in self.class_thumbnails.items()}
-        self.required_columns = set(['image', 'entity'])
+        self.required_columns = set(['image', 'class'])
 
     def make_data(self, user_id):
         try:
@@ -22,10 +22,10 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         row = self.get_row(user_id)
         if not row:
             return {'submit_url': 'data:,Done%20annotating'}
-        class_name = quote(self.read_row_column(row, 'entity'))
+        class_name = quote(self.read_row_column(row, 'class'))
         out = {"images": [],
                "data_id": self.urlsafe_uuid(),
-               "entity_name": '<h3>Class: %s</h3>' % class_name}
+               "class_name": '<h3>Class: %s</h3>' % class_name}
         h = ''
         if class_name in self.class_descriptions:
             h = '<pre>Description: '+ self.class_descriptions[class_name] + '</pre>'
@@ -36,8 +36,8 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         if h:
             out['help'] = h
         self.response_db.hmset(self.prefix + out['data_id'], {'image': row,
-                                                'user_id': user_id, 'start_time': time.time(),
-                                                'entity': class_name})
+                                                              'user_id': user_id, 'start_time': time.time(),
+                                                              'class': class_name})
         print('row[%r]' % row)
         out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image')), "width": 250})
         return out

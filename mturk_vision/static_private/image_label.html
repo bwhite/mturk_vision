@@ -79,9 +79,9 @@
             window.location.href = data.submit_url;
         }
         data_id = data.data_id;
-        $('#entity_name').html('');
-        if (data.entity_name) {
-            $('#entity_name').html(data.entity_name);
+        $('#class_name').html('');
+        if (data.class_name) {
+            $('#class_name').html(data.class_name);
         }
         $('#data_help').html('');
         if (data.help) {
@@ -172,7 +172,7 @@
            <h3>Instructions</h3>
             <div id="instructions">
             </div>
-            <div id="entity_name"></div>
+            <div id="class_name"></div>
             <div id="data_help"></div>
             <div id="query"></div>
             <h3 id="image_name"></h3>
