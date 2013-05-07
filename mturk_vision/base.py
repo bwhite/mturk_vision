@@ -4,7 +4,7 @@ import json
 import time
 import gevent
 import gevent.coros
-import cgi
+from mturk_vision import quote
 
 
 class UserNotFinishedException(Exception):
@@ -31,9 +31,9 @@ class AMTManager(object):
         self.data_source = data_source
         self._make_secret(secret)
         self.data_source_lock = gevent.coros.RLock()
-        self.lock_expire = 10
+        self.lock_expire = 60
         if 'instructions' in kw:
-            self.instructions = '<pre>%s</pre>' % cgi.escape(kw['instructions'])
+            self.instructions = '<pre>%s</pre>' % quote(kw['instructions'])
 
     @property
     def index(self):
@@ -75,6 +75,24 @@ class AMTManager(object):
             path_to_key_db.set(self.prefix + row_column_code, key)
             key_to_path_db.set(self.prefix + key, row_column_code)
 
+    def valid_user(self, user_id):
+        return (self.mode == 'amt' and self.users_db.hget(self.prefix + user_id, 'workerId') is not None) or self.mode != 'amt'
+
+    def get_row(self, user_id):
+        # TODO: Do this in lua (high priority)
+        num = 1
+        while 1:
+            rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), num=num, start=0)
+            for row in rows:
+                if not self.state_db.sismember(self.prefix + 'seen:' + user_id, row):
+                    self.state_db.sadd(self.prefix + 'seen:' + user_id, row)
+                    if self.valid_user(user_id):
+                        self.state_db.zincrby(self.prefix + 'rows', row, -1)
+                    return row
+            if num >= self.num_tasks:
+                return
+            num = min(num * 2, self.num_tasks)
+
     def data_lock(self):
         locked = 0
         data_lock = self.urlsafe_uuid()
@@ -89,20 +107,6 @@ class AMTManager(object):
         path_to_key_db = self.path_to_key_db.pipeline()
         return data_lock, state_db, key_to_path_db, path_to_key_db
 
-    def get_row(self, user):
-        # TODO: Do this in lua
-        num = 1
-        while 1:
-            rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), num=num, start=0)
-            for row in rows:
-                if not self.state_db.sismember(self.prefix + 'seen:' + user, row):
-                    self.state_db.sadd(self.prefix + 'seen:' + user, row)
-                    self.state_db.zincrby(self.prefix + 'rows', row, -1)
-                    return row
-            if num >= self.num_tasks:
-                return
-            num = min(num * 2, self.num_tasks)
-
     def data_locked(self, data_lock):
         return self.state_db.get(self.prefix + 'data_lock') == data_lock
 
@@ -110,7 +114,6 @@ class AMTManager(object):
         self.state_db.expire(self.prefix + 'data_lock', self.lock_expire)
 
     def data_unlock(self, data_lock, state_db, key_to_path_db, path_to_key_db):
-        # TODO: Replace with a lua script run on Redis
         self.data_lock_extend()
         if self.state_db.get(self.prefix + 'data_lock') == data_lock:
             state_db.execute()
@@ -125,13 +128,21 @@ class AMTManager(object):
         self._flush_db(self.state_db, keep_rows=['data_lock'])
         self._flush_db(self.key_to_path_db)
         self._flush_db(self.path_to_key_db)
-        st = time.time()
+        st = time.time() + self.lock_expire / 2
         for row, columns in self.data_source.row_columns():
             columns = set(columns)
-            if (time.time() - st) * 2 >= self.lock_expire:
+            if time.time() >= st:
                 self.data_lock_extend()
-            print((repr(row), repr(columns)))
+                st = time.time() + self.lock_expire / 2
             self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
+        self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
+
+    def destroy(self):
+        data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
+        self._flush_db(self.state_db, keep_rows=['data_lock'])
+        for db in [self.users_db, self.response_db, self.key_to_path_db, self.path_to_key_db]:
+            self.data_lock_extend()
+            self._flush_db(db)
         self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
 
     def _make_secret(self, secret=None):
