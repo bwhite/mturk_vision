@@ -31,7 +31,7 @@ class AMTManager(object):
         self.data_source = data_source
         self._make_secret(secret)
         self.data_source_lock = gevent.coros.RLock()
-        self.lock_expire = 60
+        self.lock_expire = 10
         if 'instructions' in kw:
             self.instructions = '<pre>%s</pre>' % cgi.escape(kw['instructions'])
 
@@ -107,9 +107,12 @@ class AMTManager(object):
     def data_locked(self, data_lock):
         return self.state_db.get(self.prefix + 'data_lock') == data_lock
 
+    def data_lock_extend(self):
+        self.state_db.expire(self.prefix + 'data_lock', self.lock_expire)
+
     def data_unlock(self, data_lock, state_db, key_to_path_db, path_to_key_db):
         # TODO: Replace with a lua script run on Redis
-        self.state_db.expire(self.prefix + 'data_lock', self.lock_expire)
+        self.data_lock_extend()
         if self.state_db.get(self.prefix + 'data_lock') == data_lock:
             state_db.execute()
             key_to_path_db.execute()
@@ -123,7 +126,11 @@ class AMTManager(object):
         self._flush_db(self.state_db, keep_rows=['data_lock'])
         self._flush_db(self.key_to_path_db)
         self._flush_db(self.path_to_key_db)
+        st = time.time()
         for row, columns in self.data_source.row_columns():
+            if (time.time() - st) * 2 >= self.lock_expire:
+                self.data_lock_extend()
+            print(row)
             self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
         self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
 
