@@ -12,6 +12,7 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         self.class_descriptions = {x: quote(y) for x, y in self.class_descriptions.items()}
         self.class_thumbnails = json.loads(kw.get('class_thumbnails', '{}'))
         self.class_thumbnails = {x: map(quote, y) for x, y in self.class_thumbnails.items()}
+        self.required_columns = set(['image', 'entity'])
 
     def make_data(self, user_id):
         try:
