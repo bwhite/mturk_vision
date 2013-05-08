@@ -7,7 +7,7 @@ def main():
     parser = argparse.ArgumentParser(description="Serve ")
     parser.add_argument('data', help='Data URI')
     parser.add_argument('task_key', help='Unique task key used to prefix annotations')
-    parser.add_argument('--setup', help='Initial data setup', action='store_true')
+    parser.add_argument('--reset', help='Flush and rebuild data index, keep users/results', action='store_true')
     parser.add_argument('--port', help='Run on this port',
                         default='8080')
     parser.add_argument('--redis_address', help='Redis server address',
