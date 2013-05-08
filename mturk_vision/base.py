@@ -202,12 +202,12 @@ class AMTManager(object):
     def admin_users(self, secret):
         """Return contents of users_db"""
         if secret == self.secret:
-            return {k: self.users_db.hgetall(k) for k in self.users_db.keys(self.prefix + '*')}
+            return {k.split(':', 1)[1]: self.users_db.hgetall(k) for k in self.users_db.keys(self.prefix + '*') if k.startswith(self.prefix)}
 
     def admin_results(self, secret):
         """Return contents of response_db"""
         if secret == self.secret:
-            return {k: self.response_db.hgetall(k) for k in self.response_db.keys(self.prefix + '*')}
+            return {k.split(':', 1)[1]: self.response_db.hgetall(k) for k in self.response_db.keys(self.prefix + '*') if k.startswith(self.prefix)}
 
     def _user_finished(self, user_id, force=False):
         """Check if the user has finished their tasks, if so output the return dictionary.
