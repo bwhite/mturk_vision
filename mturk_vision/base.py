@@ -205,9 +205,9 @@ class AMTManager(object):
             return {k: self.users_db.hgetall(k) for k in self.users_db.keys(self.prefix + '*')}
 
     def admin_results(self, secret):
-        """Return contents of results_db"""
+        """Return contents of response_db"""
         if secret == self.secret:
-            return {k: self.results_db.hgetall(k) for k in self.results_db.keys(self.prefix + '*')}
+            return {k: self.response_db.hgetall(k) for k in self.response_db.keys(self.prefix + '*')}
 
     def _user_finished(self, user_id, force=False):
         """Check if the user has finished their tasks, if so output the return dictionary.
