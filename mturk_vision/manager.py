@@ -21,6 +21,6 @@ def manager(**args):
                                               **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
-    if args['reset']:
-        m.reset()
+    if args['sync']:
+        m.sync()
     return m

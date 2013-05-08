@@ -59,11 +59,17 @@ class AMTManager(object):
         if keys:
             db.delete(*keys)
 
-    def add_row(self, row, priority=0):
-        data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
-        columns = self.data_source.columns(row)
-        self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db, priority)
-        self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
+    def row_increment_priority(self, row, priority):
+        # TODO: Minor race here, redo in Lua
+        if self.state_db.zscore(self.prefix + 'rows', row) is None:
+            return
+        self.state_db.zincrby(self.prefix + 'rows', priority, row)
+
+    def row_delete(self, row, state_db=None):
+        if state_db is None:
+            state_db = self.state_db
+        # NOTE: We just leave the column forward/backward mappings for simplicity
+        state_db.zrem(self.prefix + 'rows', row)
 
     def _add_row(self, row, columns, state_db, key_to_path_db, path_to_key_db, priority=0):
         if not self.required_columns.issubset(columns):
@@ -123,18 +129,27 @@ class AMTManager(object):
         else:
             print('Could not unlock[%s]' % self.prefix)
 
-    def reset(self):
+    def sync(self):
+        # Remove rows from the PQ that are no longer available, add new rows
+        # NOTE: This gets us close to allowing arbitrary deletion during annotation;
+        # however, we may just have given a user that row to annotate.  If a
+        # file isn't found, the UI should just skip automatically.
         data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
-        self._flush_db(self.state_db, keep_rows=['data_lock'])
-        self._flush_db(self.key_to_path_db)
-        self._flush_db(self.path_to_key_db)
+        prev_rows = set(self.state_db.zrange(self.prefix + 'rows', 0, -1))
+        cur_rows = set()
         st = time.time() + self.lock_expire / 2
         for row, columns in self.data_source.row_columns():
+            cur_rows.add(row)
             columns = set(columns)
             if time.time() >= st:
                 self.data_lock_extend()
                 st = time.time() + self.lock_expire / 2
-            self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
+            if row not in prev_rows:
+                self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
+        for x in prev_rows - cur_rows:
+            self.row_delete(x, state_db)
+        print('Sync: Add[%d] Del[%d]' % (len(cur_rows - prev_rows),
+                                         len(prev_rows - cur_rows)))
         self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
 
     def destroy(self):
