@@ -144,14 +144,15 @@ class AMTManager(object):
             if time.time() >= st:
                 self.data_lock_extend()
                 st = time.time() + self.lock_expire / 2
-            if row not in prev_rows:
+            if row in prev_rows:
+                prev_rows.discard(row)
+            else:
                 if self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db):
                     cur_rows.add(row)
-        for x in prev_rows - cur_rows:
+        for x in prev_rows:
             self.row_delete(x, state_db)
-        print('Sync: Add[%d] Del[%d] Cur[%d] Prev[%d]' % (len(cur_rows - prev_rows),
-                                                          len(prev_rows - cur_rows),
-                                                          len(cur_rows), len(prev_rows)))
+        print('Sync: Add[%d] Del[%d]' % (len(cur_rows),
+                                         len(prev_rows)))
         self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
 
     def destroy(self):
