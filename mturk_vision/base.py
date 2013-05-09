@@ -80,6 +80,7 @@ class AMTManager(object):
             key = self.urlsafe_uuid()
             path_to_key_db.set(self.prefix + row_column_code, key)
             key_to_path_db.set(self.prefix + key, row_column_code)
+        return True
 
     def valid_user(self, user_id):
         return (self.mode == 'amt' and self.users_db.hget(self.prefix + user_id, 'workerId') is not None) or self.mode != 'amt'
@@ -139,13 +140,13 @@ class AMTManager(object):
         cur_rows = set()
         st = time.time() + self.lock_expire / 2
         for row, columns in self.data_source.row_columns():
-            cur_rows.add(row)
             columns = set(columns)
             if time.time() >= st:
                 self.data_lock_extend()
                 st = time.time() + self.lock_expire / 2
             if row not in prev_rows:
-                self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
+                if self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db):
+                    cur_rows.add(row)
         for x in prev_rows - cur_rows:
             self.row_delete(x, state_db)
         print('Sync: Add[%d] Del[%d] Cur[%d] Prev[%d]' % (len(cur_rows - prev_rows),
