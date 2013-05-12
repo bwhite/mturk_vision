@@ -2,6 +2,7 @@ import base64
 import uuid
 import json
 import time
+import hashlib
 import gevent
 import gevent.coros
 from mturk_vision import quote
@@ -32,6 +33,7 @@ class AMTManager(object):
         self._make_secret(secret)
         self.data_source_lock = gevent.coros.RLock()
         self.lock_expire = 60
+        self.random_prefix = 4
         if 'instructions' in kw:
             self.instructions = '<pre>%s</pre>' % quote(kw['instructions'])
 
@@ -61,23 +63,26 @@ class AMTManager(object):
 
     def row_increment_priority(self, row, priority):
         # TODO: Minor race here, redo in Lua
-        if self.state_db.zscore(self.prefix + 'rows', row) is None:
+        if self.state_db.zscore(self.prefix + 'rows', self._row(row)) is None:
             return
-        self.state_db.zincrby(self.prefix + 'rows', priority, row)
+        self.state_db.zincrby(self.prefix + 'rows', priority, self._row(row))
 
     def row_delete(self, row, state_db=None):
         if state_db is None:
             state_db = self.state_db
         # NOTE: We just leave the column forward/backward mappings for simplicity
-        state_db.zrem(self.prefix + 'rows', row)
+        state_db.zrem(self.prefix + 'rows', self._row(row))
 
     def _add_row(self, row, columns, state_db, key_to_path_db, path_to_key_db, priority=0):
-        state_db.zadd(self.prefix + 'rows', priority, row)
+        state_db.zadd(self.prefix + 'rows', priority, self._row(row))
         for column in columns:
             row_column_code = self.row_column_encode(row, column)
             key = self.urlsafe_uuid()
             path_to_key_db.set(self.prefix + row_column_code, key)
             key_to_path_db.set(self.prefix + key, row_column_code)
+
+    def _row(self, row):
+        return hashlib.md5(row).digest()[:self.random_prefix] + row
 
     def valid_user(self, user_id):
         return (self.mode == 'amt' and self.users_db.hget(self.prefix + user_id, 'workerId') is not None) or self.mode != 'amt'
@@ -88,10 +93,11 @@ class AMTManager(object):
         while 1:
             rows = self.state_db.zrevrangebyscore(self.prefix + 'rows', float('inf'), float('-inf'), num=num, start=0)
             for row in rows:
+                row = row[self.random_prefix:]
                 if not self.state_db.sismember(self.prefix + 'seen:' + user_id, row):
                     self.state_db.sadd(self.prefix + 'seen:' + user_id, row)
                     if self.valid_user(user_id):
-                        self.state_db.zincrby(self.prefix + 'rows', row, -1)
+                        self.state_db.zincrby(self.prefix + 'rows', self._row(row), -1)
                     return row
             if num >= self.num_tasks:
                 return
@@ -133,7 +139,7 @@ class AMTManager(object):
         # however, we may just have given a user that row to annotate.  If a
         # file isn't found, the UI should just skip automatically.
         data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
-        del_rows = set(self.state_db.zrange(self.prefix + 'rows', 0, -1))
+        del_rows = set(x[self.random_prefix:] for x in self.state_db.zrange(self.prefix + 'rows', 0, -1))
         add_rows = set()
         st = time.time() + self.lock_expire / 2
         for row, columns in self.data_source.row_columns():
