@@ -15,6 +15,7 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         self.required_columns = set(['image', 'class'])
 
     def make_data(self, user_id):
+        print('In image_class.make_data')
         try:
             return self._user_finished(user_id)
         except mturk_vision.UserNotFinishedException:
@@ -40,6 +41,7 @@ class AMTImageClassManager(mturk_vision.AMTManager):
                                                              'class': class_name})
         print('row[%r]' % row)
         out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image')), "width": 250})
+        print(out)
         return out
 
     def result(self, user_id, data_id, data):
