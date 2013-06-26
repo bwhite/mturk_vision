@@ -19,6 +19,10 @@ def manager(**args):
         m = mturk_vision.AMTImageClassManager(index_path=sp('image_label.html'),
                                               config_path=sp('image_class_config.js'),
                                               **args)
+    elif args['type'] == 'image_qa':
+        m = mturk_vision.AMTImageQAManager(index_path=sp('image_qa.html'),
+                                           config_path=sp('image_qa_config.js'),
+                                           **args)
     else:
         raise ValueError('Unknown type[%s]' % args['type'])
     if args['sync']:

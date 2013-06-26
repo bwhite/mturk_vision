@@ -4,5 +4,6 @@ def quote(x):
 
 from base import AMTManager, UserNotFinishedException
 from image_class import AMTImageClassManager
+from image_qa import AMTImageQAManager
 from tools import create_hit
 from manager import manager

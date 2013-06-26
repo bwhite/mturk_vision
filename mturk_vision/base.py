@@ -138,25 +138,29 @@ class AMTManager(object):
         # NOTE: This gets us close to allowing arbitrary deletion during annotation;
         # however, we may just have given a user that row to annotate.  If a
         # file isn't found, the UI should just skip automatically.
-        data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
-        del_rows = set(x[self.random_prefix:] for x in self.state_db.zrange(self.prefix + 'rows', 0, -1))
-        add_rows = set()
-        st = time.time() + self.lock_expire / 2
-        for row, columns in self.data_source.row_columns():
-            columns = set(columns)
-            if time.time() >= st:
-                self.data_lock_extend()
-                st = time.time() + self.lock_expire / 2
-            if self.required_columns.issubset(columns):
-                if row not in del_rows:
-                    self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
-                    add_rows.add(row)
-                del_rows.discard(row)
-        for x in del_rows:
-            self.row_delete(x, state_db)
-        print('Sync: Add[%d] Del[%d]' % (len(add_rows),
-                                         len(del_rows)))
-        self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
+        try:
+            self.data_source_lock.acquire()
+            data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
+            del_rows = set(x[self.random_prefix:] for x in self.state_db.zrange(self.prefix + 'rows', 0, -1))
+            add_rows = set()
+            st = time.time() + self.lock_expire / 2
+            for row, columns in self.data_source.row_columns():
+                columns = set(columns)
+                if time.time() >= st:
+                    self.data_lock_extend()
+                    st = time.time() + self.lock_expire / 2
+                if self.required_columns.issubset(columns):
+                    if row not in del_rows:
+                        self._add_row(row, columns, state_db, key_to_path_db, path_to_key_db)
+                        add_rows.add(row)
+                    del_rows.discard(row)
+            for x in del_rows:
+                self.row_delete(x, state_db)
+            print('Sync: Add[%d] Del[%d]' % (len(add_rows),
+                                             len(del_rows)))
+            self.data_unlock(data_lock, state_db, key_to_path_db, path_to_key_db)
+        finally:
+            self.data_source_lock.release()
 
     def destroy(self):
         data_lock, state_db, key_to_path_db, path_to_key_db = self.data_lock()
@@ -215,7 +219,9 @@ class AMTManager(object):
 
     def read_row_column(self, row, column):
         try:
+            print('MTURK: Waiting for lock')
             self.data_source_lock.acquire()
+            print('MTURK: Got lock')
             return self.data_source.value(row, column)
         finally:
             self.data_source_lock.release()
