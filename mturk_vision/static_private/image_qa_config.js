@@ -1,0 +1,1 @@
+{"skip_button_name": "Skip", "class_description_name": "", "footer": "<p>(c) 2013</p>", "title": "Image Question Answering", "image_name": "Image", "classes_name": "Image belongs to the class?", "instructions": "<pre></pre>"}
