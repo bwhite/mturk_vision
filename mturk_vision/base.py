@@ -31,7 +31,7 @@ class AMTManager(object):
         self.config_path = config_path
         self.data_source = data_source
         self._make_secret(secret)
-        self.data_source_lock = gevent.coros.RLock()
+        self.data_source_lock = gevent.coros.RLock()  # Used to protect the data_source from simultaneous access
         self.lock_expire = 60
         self.random_prefix = 4
         if 'instructions' in kw:
