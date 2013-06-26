@@ -219,9 +219,7 @@ class AMTManager(object):
 
     def read_row_column(self, row, column):
         try:
-            print('MTURK: Waiting for lock')
             self.data_source_lock.acquire()
-            print('MTURK: Got lock')
             return self.data_source.value(row, column)
         finally:
             self.data_source_lock.release()

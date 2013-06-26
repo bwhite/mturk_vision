@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Annotator</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.0/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/style.css" rel="stylesheet">
+    <script type="text/javascript" src="static/compressed.js"></script>
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+  </head>
+
+  <body>
+    <script type="text/javascript">
+
+      function query_string() {
+          var results = new RegExp('\\?.*').exec(window.location.href);
+          if (!results) { 
+              return "";
+          }
+          return results[0];
+      }
+
+      function update_config(config) {
+          debug_config = config;
+          document.title = config.title;
+          $('#title').html(config.title)
+          <!-- Update instructions -->
+          $('#instructions').html(config.instructions)
+          <!-- Update footer -->
+          $('#footer').html(config.footer)
+          <!-- Update image name -->
+          $('#image_name').html(config.image_name)
+          <!-- Set name of skip button or hide it -->
+          if (config.skip_button_name == "" || config.skip_button_name == undefined) {
+              $('#reload').hide();
+          } else {
+              $('#reload').attr('value', config.skip_button_name);
+          }
+      }
+
+      function update_data(data) {
+        debug_data = data;
+        if (data.submitUrl) { <!-- If we are given a submit url, redirect to it and we are done. -->
+            window.location.href = data.submitUrl;
+        }
+        data_id = data.dataId;
+        $('#question').html(data.question)
+        $('#images').html('');
+        $.each(data.images, function(index, value) {   
+            $('#images').append($('<img>', {src: value.src,
+                                            width: value.width,
+                                            height: value.height}));
+        });
+      }
+
+      function update_user(user) {
+          user_id = user.userId;
+          load_data();
+      }
+
+      function load_config() {
+          $.getJSON("config.js", update_config);
+      }
+
+      function load_data() {
+          $.getJSON(user_id + "/data.js", update_data);
+      }
+
+      function load_user() {
+          $.getJSON("user.js" + query_string(), update_user);
+      }
+
+      function submit_handler(event) {
+          ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#answer').val()}), update_data);
+      }
+
+      function reload_handler(event) {
+          load_data();
+      }
+
+      function radio_change_handler() {
+          var cur_event = $(this).attr('name');
+          $('#class_description').html(class_descriptions[cur_event]);
+      }
+
+      function ajax(url, method, data, success, before_send, fail) {
+          if (typeof before_send == 'undefined' ) before_send = function() {};
+          if (typeof success == 'undefined' ) success = function() {};
+          if (typeof fail == 'undefined' ) fail = function() {};
+          var request = $.ajax({
+          type: method,
+          url: url,
+          dataType: "json",
+          contentType: "application/json; charset=utf-8",
+          beforeSend: before_send,
+          data: data,
+          success: success
+          });
+          request.fail(fail);
+      }
+
+      $(document).ready(function () {
+          load_config();
+          load_user();
+          $('#reload').click(reload_handler);
+          $('#submit').click(submit_handler);
+        });
+    </script>
+
+    <div class="container">
+      <div class="content">
+        <div class="page-header">
+          <h1 id="title"></h1>
+        </div>
+        <div class="row">
+          <div class="span14">
+           <h3>Instructions</h3>
+           <div id="instructions"></div>
+           <div id="question"></div>
+           <h3 id="image_name"></h3>
+           <div id="images"></div>
+           <textarea rows="10" cols="50" id="answer"></textarea>
+           <div>
+             <center>
+               <input id="submit" type="submit" class="btn btn-primary" value="submit">
+               <input id="reload" type="submit" class="btn" value="">
+             </center>
+           </div>
+          </div>
+        </div>
+      </div>
+
+      <footer id="footer">
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>
