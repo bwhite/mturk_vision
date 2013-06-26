@@ -42,7 +42,6 @@
           <!-- Update footer -->
           $('#footer').html(config.footer)
           <!-- Update image name -->
-          $('#image_name').html(config.image_name)
           <!-- Set name of skip button or hide it -->
           if (config.skip_button_name == "" || config.skip_button_name == undefined) {
               $('#reload').hide();
@@ -85,6 +84,7 @@
 
       function submit_handler(event) {
           ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#answer').val()}), update_data);
+          $('#answer').val('');
       }
 
       function reload_handler(event) {
@@ -130,9 +130,10 @@
            <h3>Instructions</h3>
            <div id="instructions"></div>
            <div id="question"></div>
-           <h3 id="image_name"></h3>
-           <div id="images"></div>
-           <textarea rows="10" cols="50" id="answer"></textarea>
+           <div id="images" align="center"></div>
+           <div align="center">
+             <textarea rows="6" cols="100" id="answer"></textarea>
+           </div>
            <div>
              <center>
                <input id="submit" type="submit" class="btn btn-primary" value="submit">
