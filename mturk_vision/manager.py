@@ -14,7 +14,11 @@ def manager(**args):
                      for x, y in db_nums))
     logging.debug(args)
     sp = lambda x: ROOT + '/static_private/' + x
-    args['data_source'] = data_source_from_uri(args['data'])
+    # Used if we want to use a specific data connection instead of creating one
+    if args['data_connection']:
+        args['data_source'] = data_source_from_uri(args['data'], data_connection=args['data_connection'])
+    else:
+        args['data_source'] = data_source_from_uri(args['data'])
     if args['type'] == 'image_class':
         m = mturk_vision.AMTImageClassManager(index_path=sp('image_label.html'),
                                               config_path=sp('image_class_config.js'),
