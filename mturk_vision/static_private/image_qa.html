@@ -164,6 +164,10 @@
 
       $(document).ready(function () {
           mapSetup();
+          $('#inputMap').hide();
+          $('#outputImage').hide();
+          $('#outputLocation').hide();
+          $('#outputText').hide();
           load_config();
           load_user();
           $('#reload').click(reload_handler);
