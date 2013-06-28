@@ -22,7 +22,7 @@ class AMTImageQAManager(mturk_vision.AMTManager):
         responseType = self.read_row_column(row, 'responseType')
         out = {"images": [],
                "dataId": self.urlsafe_uuid(),
-               "question": '<h3>Question: "%s"</h3>' % quote(question)}
+               "question": quote(question)}
         data = {'image': row,
                 'userId': user_id,
                 'startTime': time.time(),
@@ -38,7 +38,7 @@ class AMTImageQAManager(mturk_vision.AMTManager):
         self.response_db.hmset(self.prefix + out['dataId'], data)
         image = self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image'))
         if image:
-            out['images'].append({"src": 'image/%s' % image, "width": 640})
+            out['image'] = image
         return out
 
     def result(self, user_id, data_id, data):

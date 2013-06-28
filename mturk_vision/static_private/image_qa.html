@@ -81,7 +81,7 @@
           }
           $('#submit').off('click');
           data_id = data.dataId;
-          $('#question').html(data.question);
+          $('#question').html('<h3>Question: "' + data.question + '"</h3>');
           if (!!data.latitude && !!data.longitude) {
               $('#inputMap').show(0, function () {
                   mapCenter(Number(data.latitude), Number(data.longitude));
@@ -91,11 +91,9 @@
               $('#inputMap').hide(0);
           }
           $('#inputImages').html('');
-          $.each(data.images, function(index, value) {   
-              $('#inputImages').append($('<img>', {src: value.src,
-                                                   width: value.width,
-                                                   height: value.height}));
-          });
+          if (data.image) {
+              $('#inputImages').append($('<img>', {src: 'image/' + image, width: 640}));
+          }
           if (data.responseType == 'image') {
               $('#responseImage').val('');
               $('#outputImage').show(0);
