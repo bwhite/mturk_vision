@@ -83,8 +83,8 @@
           data_id = data.dataId;
           $('#question').html(data.question);
           if (!!data.latitude && !!data.longitude) {
-              mapCenter(Number(data.latitude), Number(data.longitude));
               $('#inputMap').show();
+              mapCenter(Number(data.latitude), Number(data.longitude));
           } else {
               $('#inputMap').hide();
           }
