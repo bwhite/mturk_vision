@@ -33,7 +33,7 @@ class AMTImageQAManager(mturk_vision.AMTManager):
             longitude = quote(self.read_row_column(row, 'longitude'))
             out['latitude'] = data['latitude'] = latitude
             out['longitude'] = data['longitude'] = longitude
-        except KeyError:
+        except ValueError:
             pass
         self.response_db.hmset(self.prefix + out['dataId'], data)
         # TODO: Find a way to check in redis first
