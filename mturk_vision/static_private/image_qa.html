@@ -75,7 +75,7 @@
           $('#submit').off('click');
           data_id = data.dataId;
           $('#question').html(data.question)
-          if (_.has(data, 'latitude') && _.has(data, 'longitude')) {
+          if (hasOwnProperty(data, 'latitude') && hasOwnProperty(data, 'longitude')) {
               mapCenter(Number(data.latitude), Number(data.longitude));
               $('#inputMap').show();
           } else {
