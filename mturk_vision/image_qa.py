@@ -8,7 +8,7 @@ class AMTImageQAManager(mturk_vision.AMTManager):
 
     def __init__(self, *args, **kw):
         super(AMTImageQAManager, self).__init__(*args, **kw)
-        self.required_columns = set(['image', 'question', 'responseType'])
+        self.required_columns = set(['question', 'responseType'])
 
     def make_data(self, user_id):
         try:
@@ -23,11 +23,20 @@ class AMTImageQAManager(mturk_vision.AMTManager):
         out = {"images": [],
                "dataId": self.urlsafe_uuid(),
                "question": '<h3>Question: "%s"</h3>' % quote(question)}
-        self.response_db.hmset(self.prefix + out['dataId'], {'image': row,
-                                                             'userId': user_id,
-                                                             'startTime': time.time(),
-                                                             'responseType': responseType,
-                                                             'question': question})
+        data = {'image': row,
+                'userId': user_id,
+                'startTime': time.time(),
+                'responseType': responseType,
+                'question': question}
+        try:
+            latitude = quote(self.read_row_column(row, 'latitude'))
+            longitude = quote(self.read_row_column(row, 'longitude'))
+            out['latitude'] = data['latitude'] = latitude
+            out['longitude'] = data['longitude'] = longitude
+        except KeyError:
+            pass
+        self.response_db.hmset(self.prefix + out['dataId'], data)
+        # TODO: Find a way to check in redis first
         out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image')), "width": 640})
         return out
 
