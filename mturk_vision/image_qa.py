@@ -36,8 +36,9 @@ class AMTImageQAManager(mturk_vision.AMTManager):
         except ValueError:
             pass
         self.response_db.hmset(self.prefix + out['dataId'], data)
-        # TODO: Find a way to check in redis first
-        out['images'].append({"src": 'image/%s' % self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image')), "width": 640})
+        image = self.path_to_key_db.get(self.prefix + self.row_column_encode(row, 'image'))
+        if image:
+            out['images'].append({"src": 'image/%s' % image, "width": 640})
         return out
 
     def result(self, user_id, data_id, data):

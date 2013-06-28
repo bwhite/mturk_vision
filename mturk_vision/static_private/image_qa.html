@@ -27,7 +27,7 @@
     <script type="text/javascript">
       function mapSetup() {
             var mapOptions = {
-                zoom: 14,
+                zoom: 17,
                 center: new google.maps.LatLng(38.88941277270135, -77.03525304794312),
                 mapTypeId: google.maps.MapTypeId.HYBRID
             };
@@ -36,9 +36,16 @@
                 $('#responseLatitude').val(event.latLng.lat());
                 $('#responseLongitude').val(event.latLng.lng());
             });
+          mapMarkers = [];
       }
       function mapCenter(latitude, longitude) {
-          map.setCenter(new google.maps.LatLng(latitude, longitude));
+          for (var i = 0; i < mapMarkers.length; i++) {
+              mapMarkers[i].setMap(null);
+          }
+          mapMarkers = [];
+          var latlon = new google.maps.LatLng(latitude, longitude);
+          map.setCenter(latlon);
+          mapMarkers.push(new google.maps.Marker({position: latlon, map: map}));
       }
 
       function query_string() {
