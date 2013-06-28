@@ -83,10 +83,11 @@
           data_id = data.dataId;
           $('#question').html(data.question);
           if (!!data.latitude && !!data.longitude) {
-              $('#inputMap').show();
-              mapCenter(Number(data.latitude), Number(data.longitude));
+              $('#inputMap').show(0, function () {
+                  mapCenter(Number(data.latitude), Number(data.longitude));
+              });
           } else {
-              $('#inputMap').hide();
+              $('#inputMap').hide(0);
           }
           $('#inputImages').html('');
           $.each(data.images, function(index, value) {   
@@ -96,18 +97,18 @@
           });
           if (data.responseType == 'image') {
               $('#responseImage').val('');
-              $('#outputImage').show();
-              $('#outputLocation').hide();
-              $('#outputText').hide();
+              $('#outputImage').show(0);
+              $('#outputLocation').hide(0);
+              $('#outputText').hide(0);
               $('#submit').click(function () {
                   ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#responseImage').val()}), update_data);
               });
           } else if (data.responseType == 'location') {
               $('#responseLatitude').val('');
               $('#responseLongitude').val('');
-              $('#outputImage').hide();
-              $('#outputLocation').show();
-              $('#outputText').hide();
+              $('#outputImage').hide(0);
+              $('#outputLocation').show(0);
+              $('#outputText').hide(0);
               $('#submit').click(function () {
                   ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: {latitude: $('#responseLatitude').val(),
                                                                                                     longitude: $('#responseLongitude').val()}}), update_data);
@@ -116,7 +117,7 @@
               $('#responseText').val('');
               $('#outputImage').hide();
               $('#outputLocation').hide();
-              $('#outputText').show();
+              $('#outputText').show(0);
               $('#submit').click(function () {
                   ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#responseText').val()}), update_data);
               });
