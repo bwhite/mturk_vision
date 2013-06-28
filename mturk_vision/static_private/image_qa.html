@@ -92,7 +92,7 @@
           }
           $('#inputImages').html('');
           if (data.image) {
-              $('#inputImages').append($('<img>', {src: 'image/' + image, width: 640}));
+              $('#inputImages').append($('<img>', {src: 'image/' + data.image, width: 640}));
           }
           if (data.responseType == 'image') {
               $('#responseImage').val('');
