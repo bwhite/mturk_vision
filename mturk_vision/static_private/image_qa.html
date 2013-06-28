@@ -31,11 +31,14 @@
                 center: new google.maps.LatLng(38.88941277270135, -77.03525304794312),
                 mapTypeId: google.maps.MapTypeId.HYBRID
             };
-            map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+            map = new google.maps.Map(document.getElementById("inputMap"), mapOptions);
             google.maps.event.addListener(map, 'rightclick', function(event) {
-                $('#userLatitude').val(event.latLng.lat());
-                $('#userLongitude').val(event.latLng.lng());
+                $('#responseLatitude').val(event.latLng.lat());
+                $('#responseLongitude').val(event.latLng.lng());
             });
+      }
+      function mapCenter(latitude, longitude) {
+          map.setCenter(new google.maps.LatLng(latitude, longitude));
       }
 
       function query_string() {
@@ -69,21 +72,48 @@
           if (data.submitUrl) {
               window.location.href = data.submitUrl;
           }
+          $('#submit').off('click');
           data_id = data.dataId;
           $('#question').html(data.question)
-          $('#images').html('');
-          if (data.responseType == 'image') {
-              
-          } else if (data.responseType == 'location') {
-              
+          if (_.has(data, 'latitude') && _.has(data, 'longitude')) {
+              mapCenter(Number(data.latitude), Number(data.longitude));
+              $('#inputMap').show();
           } else {
-
+              $('#inputMap').hide();
           }
+          $('#inputImages').html('');
           $.each(data.images, function(index, value) {   
-              $('#images').append($('<img>', {src: value.src,
-                                              width: value.width,
-                                              height: value.height}));
+              $('#inputImages').append($('<img>', {src: value.src,
+                                                   width: value.width,
+                                                   height: value.height}));
           });
+          if (data.responseType == 'image') {
+              $('#responseImage').val('');
+              $('#outputImage').show();
+              $('#outputLocation').hide();
+              $('#outputText').hide();
+              $('#submit').click(function () {
+                  ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#responseImage').val()}), update_data);
+              });
+          } else if (data.responseType == 'location') {
+              $('#responseLatitude').val('');
+              $('#responseLongitude').val('');
+              $('#outputImage').hide();
+              $('#outputLocation').show();
+              $('#outputText').hide();
+              $('#submit').click(function () {
+                  ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: {latitude: $('#responseLatitude').val(),
+                                                                                                    longitude: $('#responseLongitude').val()}}), update_data);
+              });
+          } else {
+              $('#responseText').val('');
+              $('#outputImage').hide();
+              $('#outputLocation').hide();
+              $('#outputText').show();
+              $('#submit').click(function () {
+                  ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#responseText').val()}), update_data);
+              });
+          }
       }
 
       function update_user(user) {
@@ -105,7 +135,6 @@
 
       function submit_handler(event) {
           ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#answer').val()}), update_data);
-          $('#answer').val('');
       }
 
       function reload_handler(event) {
@@ -138,7 +167,6 @@
           load_config();
           load_user();
           $('#reload').click(reload_handler);
-          $('#submit').click(submit_handler);
         });
     </script>
 
@@ -152,11 +180,14 @@
            <h3>Instructions</h3>
            <div id="instructions"></div>
            <div id="question"></div>
-           <div id="images" align="center"></div>
-           <div align="center" id="response">
-             <div><textarea rows="6" cols="100" id="answer" style="width:640px;"></textarea></div>
-             <div><input type="text"><span class="help-inline">Paste image url here</span></div>
-             <div><div id="map_canvas" style="width:100%; height:500px"></div><input type="text"><span class="help-inline">Latitude</span><input type="text"><span class="help-inline">Longitude</span></div>
+           <div>
+             <div id="inputImages" align="center"></div>
+             <div id="inputMap" style="width:100%; height:500px"></div>
+           </div>
+           <div align="center" id="output">
+             <div id="outputText"><textarea rows="6" cols="100" id="responseText" style="width:640px;"></textarea></div>
+             <div id="outputImage"><input type="text" id="responseImage"><span class="help-inline">Paste image url here</span></div>
+             <div id="outputLocation"><input id="responseLatitude" type="text"><span class="help-inline">Latitude</span><input type="text" id="responseLongitude"><span class="help-inline">Longitude</span></div>
            </div>
            <div>
              <center>
