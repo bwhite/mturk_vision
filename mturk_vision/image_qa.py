@@ -20,8 +20,7 @@ class AMTImageQAManager(mturk_vision.AMTManager):
             return {'submitUrl': 'data:,Done%20annotating'}
         question = quote(self.read_row_column(row, 'question'))
         responseType = self.read_row_column(row, 'responseType')
-        out = {"images": [],
-               "dataId": self.urlsafe_uuid(),
+        out = {"dataId": self.urlsafe_uuid(),
                "question": quote(question)}
         data = {'image': row,
                 'userId': user_id,
