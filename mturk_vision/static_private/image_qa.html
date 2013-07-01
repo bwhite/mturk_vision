@@ -185,8 +185,32 @@
            </div>
            <div align="center" id="output">
              <div id="outputText"><textarea rows="6" cols="100" id="responseText" style="width:640px;"></textarea></div>
-             <div id="outputImage"><input type="text" id="responseImage"><span class="help-inline">Paste image url here</span></div>
-             <div id="outputLocation"><input id="responseLatitude" type="text"><span class="help-inline">Latitude</span><input type="text" id="responseLongitude"><span class="help-inline">Longitude</span></div>
+
+
+             <div class="control-group" id="outputImage">
+               <label class="control-label" for="responseImage">Image Url (optional)</label>
+               <div class="controls">
+                 <input type="text" id="responseImage">
+                 <span class="help-inline">Paste image url here</span>
+               </div>
+             </div>
+
+             <div id="outputLocation">
+               <div class="control-group">
+                 <label class="control-label" for="responseLatitude">Location Latitude (optional)</label>
+                 <div class="controls">
+                   <input type="text" id="responseLatitude">
+                   <span class="help-inline">Latitude in decimal format</span>
+                 </div>
+               </div>
+               <div class="control-group">
+                 <label class="control-label" for="responseLongitude">Location Longitude (optional)</label>
+                 <div class="controls">
+                   <input type="text" id="responseLongitude">
+                   <span class="help-inline">Longitude in decimal format</span>
+                 </div>
+               </div>
+             </div>
            </div>
            <div>
              <center>
