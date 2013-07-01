@@ -94,33 +94,21 @@
           if (data.image) {
               $('#inputImages').append($('<img>', {src: 'image/' + data.image, width: 640}));
           }
-          if (data.responseType == 'image') {
-              $('#responseImage').val('');
-              $('#outputImage').show(0);
-              $('#outputLocation').hide(0);
-              $('#outputText').hide(0);
-              $('#submit').click(function () {
-                  ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#responseImage').val()}), update_data);
-              });
-          } else if (data.responseType == 'location') {
-              $('#responseLatitude').val('');
-              $('#responseLongitude').val('');
-              $('#outputImage').hide(0);
-              $('#outputLocation').show(0);
-              $('#outputText').hide(0);
-              $('#submit').click(function () {
-                  ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: {latitude: $('#responseLatitude').val(),
-                                                                                                    longitude: $('#responseLongitude').val()}}), update_data);
-              });
-          } else {
-              $('#responseText').val('');
-              $('#outputImage').hide();
-              $('#outputLocation').hide();
-              $('#outputText').show(0);
-              $('#submit').click(function () {
-                  ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: $('#responseText').val()}), update_data);
-              });
-          }
+          $('#responseImage').val('');
+          $('#outputImage').show(0);
+          $('#outputLocation').show(0);
+          $('#outputText').show(0);
+          $('#submit').click(function () {
+              var outData = {text: $('#responseImage').val()};
+              if ($('#responseLatitude').val().length && ($('#responseLongitude').val().length) {
+                  outData.latitude = Number($('#responseLatitude').val());
+                  outData.longitude = Number($('#responseLongitude').val());
+              }
+              if ($('#responseImage').val().length) {
+                  outData.image_url = $('#responseImage').val();
+              }
+              ajax("result", "post", JSON.stringify({user_id: user_id, data_id: data_id, data: outData}), update_data);
+          });
       }
 
       function update_user(user) {

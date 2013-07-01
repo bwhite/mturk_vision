@@ -8,7 +8,7 @@ class AMTImageQAManager(mturk_vision.AMTManager):
 
     def __init__(self, *args, **kw):
         super(AMTImageQAManager, self).__init__(*args, **kw)
-        self.required_columns = set(['question', 'responseType'])
+        self.required_columns = set(['question'])
 
     def make_data(self, user_id):
         try:
@@ -19,13 +19,11 @@ class AMTImageQAManager(mturk_vision.AMTManager):
         if not row:
             return {'submitUrl': 'data:,Done%20annotating'}
         question = quote(self.read_row_column(row, 'question'))
-        responseType = self.read_row_column(row, 'responseType')
         out = {"dataId": self.urlsafe_uuid(),
                "question": quote(question)}
         data = {'image': row,
                 'userId': user_id,
                 'startTime': time.time(),
-                'responseType': responseType,
                 'question': question}
         try:
             latitude = quote(self.read_row_column(row, 'latitude'))
