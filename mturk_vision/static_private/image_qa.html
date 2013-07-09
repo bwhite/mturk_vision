@@ -94,6 +94,9 @@
           if (data.image) {
               $('#inputImages').append($('<img>', {src: 'image/' + data.image, width: 640}));
           }
+          $('#responseLongitude').val('');
+          $('#responseLatitude').val('');
+          $('#responseText').val('');
           $('#responseImage').val('');
           $('#outputImage').show(0);
           $('#outputLocation').show(0);
