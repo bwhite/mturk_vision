@@ -99,7 +99,7 @@
           $('#outputLocation').show(0);
           $('#outputText').show(0);
           $('#submit').click(function () {
-              var outData = {text: $('#responseImage').val()};
+              var outData = {text: $('#responseText').val()};
               if ($('#responseLatitude').val().length && $('#responseLongitude').val().length) {
                   outData.latitude = Number($('#responseLatitude').val());
                   outData.longitude = Number($('#responseLongitude').val());
