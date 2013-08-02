@@ -9,9 +9,9 @@ class AMTImageClassManager(mturk_vision.AMTManager):
     def __init__(self, *args, **kw):
         super(AMTImageClassManager, self).__init__(*args, **kw)
         self.class_descriptions = json.loads(kw.get('class_descriptions', '{}'))
-        self.class_descriptions = {x: quote(y) for x, y in self.class_descriptions.items()}
+        self.class_descriptions = dict((x, quote(y)) for x, y in self.class_descriptions.items())
         self.class_thumbnails = json.loads(kw.get('class_thumbnails', '{}'))
-        self.class_thumbnails = {x: map(quote, y) for x, y in self.class_thumbnails.items()}
+        self.class_thumbnails = dict((x, map(quote, y)) for x, y in self.class_thumbnails.items())
         self.required_columns = set(['image', 'class'])
 
     def make_data(self, user_id):
