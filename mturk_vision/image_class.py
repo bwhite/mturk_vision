@@ -12,7 +12,11 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         self.class_descriptions = dict((x, quote(y)) for x, y in self.class_descriptions.items())
         self.class_thumbnails = json.loads(kw.get('class_thumbnails', '{}'))
         self.class_thumbnails = dict((x, map(quote, y)) for x, y in self.class_thumbnails.items())
-        self.required_columns = set(['image', 'class'])
+        self.class_override = kw.get('class')
+        if self.class_override:
+            self.required_columns = set(['image', 'class'])
+        else:
+            self.required_columns = set(['image'])
 
     def make_data(self, user_id):
         try:
@@ -22,7 +26,8 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         row = self.get_row(user_id)
         if not row:
             return {'submitUrl': 'data:,Done%20annotating'}
-        class_name = quote(self.read_row_column(row, 'class'))
+        class_name = self.class_override if self.class_override else self.read_row_column(row, 'class')
+        class_name = quote(class_name)
         out = {"images": [],
                "dataId": self.urlsafe_uuid(),
                "className": '<h3>Class: %s</h3>' % class_name}
