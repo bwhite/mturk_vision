@@ -14,9 +14,10 @@ class AMTImageClassManager(mturk_vision.AMTManager):
         self.class_thumbnails = dict((x, map(quote, y)) for x, y in self.class_thumbnails.items())
         self.class_override = kw.get('class')
         if self.class_override:
-            self.required_columns = set(['image', 'class'])
-        else:
             self.required_columns = set(['image'])
+        else:
+            self.required_columns = set(['image', 'class'])
+
 
     def make_data(self, user_id):
         try:
